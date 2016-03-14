@@ -1,0 +1,8 @@
+use Mix.Config
+
+config :slack,
+  default_channel: "CHANNEL_ID"
+  bots: [
+    %{ name:       "NAME",
+       token:      "BOT_ACCESS_TOKEN"
+  ]

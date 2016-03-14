@@ -1,0 +1,4 @@
+%{"httpotion": {:hex, :httpotion, "2.2.2"},
+  "ibrowse": {:hex, :ibrowse, "4.2.2"},
+  "poison": {:hex, :poison, "2.1.0"},
+  "socket": {:git, "https://github.com/zvkemp/elixir-socket.git", "fd7d726bc91164837b7ed06421b21322da07c8e8", []}}
