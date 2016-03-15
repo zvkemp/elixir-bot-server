@@ -44,7 +44,7 @@ defmodule Slack.Bot do
   # append new message id to payloads with none
   defp send_payload(name, %{ id: _id } = payload) do
     GenServer.call(:"#{name}:message_tracker", { :push, payload })
-    GenServer.call(:"#{name}:socket", { :push, payload })
+    GenServer.cast(:"#{name}:outbox", { :push, payload })
   end
   defp send_payload(name, payload) do
     send_payload(name, Map.put(payload, :id, new_message_id(name)) )
