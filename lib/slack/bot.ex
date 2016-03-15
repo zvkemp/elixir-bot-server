@@ -24,7 +24,7 @@ defmodule Slack.Bot do
 
   # TODO
   defp default_channel do
-    Application.get_env(:slack, :default_channel)
+    Slack.default_channel
   end
 
   def handle_cast({ :ping }, %{ name: name } = state) do
@@ -65,9 +65,12 @@ defmodule Slack.Bot do
   end
 
   defp try_echo(name, %{ "text" => t, "type" => "message", "user" => user, "channel" => c }, %{ id: uid, ribbit_msg: r }) do
+    uid_flag = "<@#{uid}>"
     cond do
-      String.contains?(t, name) || String.contains?(t, "<@#{uid}>") ->
-        say(name, "<@#{user}> #{r}", c)
+      String.starts_with?(t, "#{name} echo ") || String.starts_with?(t, "#{uid_flag} echo ") ->
+        say(name, String.split(t, " echo ", parts: 2) |> Enum.at(1), c)
+      String.contains?(t, name) || String.contains?(t, uid_flag) ->
+        say(name, r, c)
       true -> nil
     end
   end
