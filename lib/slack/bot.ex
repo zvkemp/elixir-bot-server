@@ -32,7 +32,7 @@ defmodule Slack.Bot do
     { :noreply, state }
   end
 
-  def handle_cast({ :recv, payload }, %{ name: name } = state) do
+  def handle_cast({ :event, payload }, %{ name: name } = state) do
     process_receipt(name, payload, state)
     { :noreply, state }
   end
@@ -54,12 +54,23 @@ defmodule Slack.Bot do
     GenServer.call(:"#{name}:counter", { :tick })
   end
 
-  defp process_receipt(name, %{ "reply_to" => id } = msg, config) do
+  defp process_receipt(name, %{ "reply_to" => id, "ok" => true } = msg, config) do
     GenServer.call(:"#{name}:message_tracker", { :reply, id, msg })
   end
 
   # TODO
   defp process_receipt(name, msg, config) do
+    try_echo(name, msg, config)
     msg |> IO.inspect
   end
+
+  defp try_echo(name, %{ "text" => t, "type" => "message", "user" => user, "channel" => c }, %{ id: uid, ribbit_msg: r }) do
+    cond do
+      String.contains?(t, name) || String.contains?(t, "<@#{uid}>") ->
+        say(name, "<@#{user}> #{r}", c)
+      true -> nil
+    end
+  end
+
+  defp try_echo(_, _, _), do: nil
 end

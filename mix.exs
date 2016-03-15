@@ -16,7 +16,7 @@ defmodule Slack.Mixfile do
   def application do
     [
       applications: [:logger, :httpotion],
-      # mod: {Slack, []}
+      mod: {Slack, []}
     ]
   end
 

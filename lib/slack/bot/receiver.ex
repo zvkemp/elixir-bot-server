@@ -17,12 +17,9 @@ defmodule Slack.Bot.Receiver do
 
   # this is called recursively until the supervisor exits.
   defp recv(bot_server, socket_server, socket) do
-    cond do # this cond may not be necessary
-      Process.whereis(bot_server) ->
-        GenServer.cast(bot_server, { :recv, Slack.Websocket.recv(socket) })
-      true ->
-        :timer.sleep(2000)
-    end
+    # EventHandler spawning should possibly be moved to Bot, as there is more immediately
+    # available metadata about how to respond and parse the message
+    Slack.Websocket.recv(socket) |> Slack.Bot.EventHandler.handle(bot_server)
     recv(bot_server, socket_server, socket)
   end
 
