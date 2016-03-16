@@ -5,6 +5,7 @@ defmodule Slack.Bot do
   the supervision tree.
   """
   use GenServer
+  require Logger
 
   def start_link(name, config) do
     GenServer.start_link(__MODULE__, { :ok, config }, name: name)
@@ -54,26 +55,19 @@ defmodule Slack.Bot do
     GenServer.call(:"#{name}:counter", { :tick })
   end
 
-  defp process_receipt(name, %{ "reply_to" => id, "ok" => true } = msg, config) do
+  # NOTE: removed the "ok" => true matcher (not included in pongs).
+  # May want to re-add it at some point.
+  defp process_receipt(name, %{ "reply_to" => id } = msg, config) do
     GenServer.call(:"#{name}:message_tracker", { :reply, id, msg })
   end
 
-  # TODO
-  defp process_receipt(name, msg, config) do
-    try_echo(name, msg, config)
-    msg |> IO.inspect
+  defp process_receipt(name, %{ "type" => "message" } = msg, %{ responder: responder } = c) do
+    apply(responder, :respond, [name, msg, c])
   end
 
-  defp try_echo(name, %{ "text" => t, "type" => "message", "user" => user, "channel" => c }, %{ id: uid, ribbit_msg: r }) do
-    uid_flag = "<@#{uid}>"
-    cond do
-      String.starts_with?(t, "#{name} echo ") || String.starts_with?(t, "#{uid_flag} echo ") ->
-        say(name, String.split(t, " echo ", parts: 2) |> Enum.at(1), c)
-      String.contains?(t, name) || String.contains?(t, uid_flag) ->
-        say(name, r, c)
-      true -> nil
-    end
+  defp process_receipt(name, %{ "type" => "hello" } = msg, config) do
+    Logger.info("[bot:#{name}] Received \"hello\".")
   end
 
-  defp try_echo(_, _, _), do: nil
+  defp process_receipt(name, msg, config), do: nil
 end

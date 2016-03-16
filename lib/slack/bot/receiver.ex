@@ -24,7 +24,6 @@ defmodule Slack.Bot.Receiver do
   end
 
   defp wait_for_socket(server) do
-    IO.puts("wait_for_socket")
     cond do
       Process.whereis(server) -> GenServer.call(server, { :socket })
       true ->
