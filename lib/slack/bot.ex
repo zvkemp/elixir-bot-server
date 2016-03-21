@@ -19,8 +19,12 @@ defmodule Slack.Bot do
 
   # ---
 
-  def init({ :ok, config }) do
+  def init({ :ok, %{} = config }) do
     { :ok, config }
+  end
+
+  def init({ :ok, _ = config }) do
+    { :error, config }
   end
 
   # TODO

@@ -8,9 +8,16 @@ defmodule Slack.Bot.Supervisor do
   # ---
 
   def init({ :ok, %{ name: name, token: token } = config }) do
+    api_client    = Map.get(config, :api_client, Slack.API)
+    socket_client = Map.get(config, :socket_client, Socket.Web)
+    %{
+      "self" => %{ "id" => uid },
+      "url"  => ws_url
+    } = meta = api_client.auth_request(token)
+
     children = [
-      worker(Slack.Bot,                    [:"#{name}:bot", config]),
-      worker(Slack.Bot.Socket,             [:"#{name}:socket", token]),
+      worker(Slack.Bot,                    [:"#{name}:bot", Map.put(config, :id, uid)]),
+      worker(Slack.Bot.Socket,             [:"#{name}:socket", ws_url, socket_client]),
       worker(Slack.Bot.Counter,            [:"#{name}:counter"]),
       worker(Slack.Bot.MessageTracker,     [:"#{name}:message_tracker"]),
       worker(Slack.Bot.Outbox,             [:"#{name}:outbox", :"#{name}:socket"]),

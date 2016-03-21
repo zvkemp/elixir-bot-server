@@ -1,4 +1,7 @@
 defmodule Slack.API do
+  # @behaviour Slack.Behaviours.API
+  use Slack.Behaviours.API
+
   @api_root "https://slack.com/api"
   @methods %{ auth:         "rtm.start",
               channels:     "channels.list",
@@ -7,12 +10,15 @@ defmodule Slack.API do
   @json_headers ["Content-Type": "application/json", "Accepts": "application/json"]
 
   def auth_request(token) do
-    { :ok, json } = post("#{@methods.auth}?token=#{token}")
-    json
+    post_method(:auth, %{ token: token })
   end
 
-  def join_channel(token, channel_name) do
-    { :ok, json } = post("#{@methods.join_channel}?token=#{token}&name=#{channel_name}")
+  def join_channel(channel_name, token) do
+    post_method(:join_channel, %{ token: token, name: channel_name })
+  end
+
+  defp post_method(method, %{ token: _ } = query) do
+    { :ok, json } = post("#{@methods[method]}?#{URI.encode_query(query)}")
     json
   end
 
