@@ -5,6 +5,7 @@ defmodule Slack.Mixfile do
     [app: :slack,
      version: "0.0.1",
      elixir: "~> 1.2",
+     elixirc_paths: elixirc_paths(Mix.env),
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps]
@@ -20,6 +21,9 @@ defmodule Slack.Mixfile do
     ]
   end
 
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_),     do: ["lib"]
+
   # Dependencies can be Hex packages:
   #
   #   {:mydep, "~> 0.3.0"}
@@ -33,7 +37,8 @@ defmodule Slack.Mixfile do
     [
       {:httpotion, "~> 2.2.0"},
       {:socket, github: "zvkemp/elixir-socket"},
-      {:poison, "~> 2.0"}
+      {:poison, "~> 2.0"},
+      {:mix_test_watch, "~> 0.2", only: :dev}
     ]
   end
 end
