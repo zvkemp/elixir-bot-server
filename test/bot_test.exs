@@ -20,28 +20,27 @@ defmodule Slack.BotTest.Integration do
     { :ok, context }
   end
 
-  # async test example
-  test "ping", %{ name: name, token: token } do
-    Slack.Bot.ping!(name)
-    assert_receive({:test_payload, ^token, data})
-    assert %{ "type" => "ping" } = data
-  end
-
   test "automatic pings", %{ name: name, token: token } do
     assert_receive({ :test_payload, ^token, data }, 200)
     assert %{ "type" => "ping" } = data
   end
 
   test "say with default channel", %{ name: name, token: token } do
-    Slack.Bot.ping!(name)
-    Slack.Bot.say(name, "hey there", "CHANNEL")
-    assert_receive({:test_payload, ^token, data})
-    assert_receive({:test_payload, ^token, data2})
-    assert %{
+    channel = "CHANNEL"
+    message = "hey there"
+    Slack.Bot.say(name, message, channel)
+    assert_receive({:test_payload, ^token, %{
       "type"    => "message",
-      "text"    => "hey there",
-      "channel" => "CHANNEL"
-    } = data2
+      "text"    => message,
+      "channel" => channel,
+      "id"      => msg_id
+    }})
+
+    # tracks the message
+    assert message == GenServer.call(:"#{name}:message_tracker", { :current })[msg_id][:text]
+    :timer.sleep(25) # TODO: replace this wait with something more deterministic
+    # cleans up the message upon server receipt
+    assert nil == GenServer.call(:"#{name}:message_tracker", { :current })[msg_id]
   end
 end
 

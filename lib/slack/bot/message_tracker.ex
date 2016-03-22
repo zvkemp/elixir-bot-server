@@ -25,4 +25,8 @@ defmodule Slack.Bot.MessageTracker do
   def handle_call({ :outstanding? }, _from, state) do
     { :reply, Enum.any?(state), state }
   end
+
+  def handle_call({ :current }, _from, state) do
+    { :reply, state, state }
+  end
 end
