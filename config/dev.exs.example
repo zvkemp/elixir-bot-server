@@ -1,8 +1,16 @@
 use Mix.Config
 
 config :slack,
-  default_channel: "CHANNEL_ID"
+  default_channel: "CHANNELID",
   bots: [
-    %{ name:       "NAME",
-       token:      "BOT_ACCESS_TOKEN"
+    %{ name:    "bot_a",
+       token:   "BOT_ACCESS_TOKEN (starting with xoxb-)", 
+       ribbit_msg: "ribbit", # used in default responder
+       responder: Slack.Responders.Default
+     },
+    %{ name:    "bot_b",
+       token:   "BOT_ACCESS_TOKEN (starting with xoxb-)", 
+       ribbit_msg: "ribbit", # used in default responder
+       responder: Slack.Responders.Default
+     }
   ]

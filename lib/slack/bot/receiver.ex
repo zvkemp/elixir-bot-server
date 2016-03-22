@@ -11,16 +11,16 @@ defmodule Slack.Bot.Receiver do
 
   # this is called until the socket is available
   defp recv(bot_server, socket_server) do
-    sock = wait_for_socket(socket_server)
-    recv(bot_server, socket_server, sock)
+    { sock, client } = wait_for_socket(socket_server)
+    recv(bot_server, socket_server, sock, client)
   end
 
   # this is called recursively until the supervisor exits.
-  defp recv(bot_server, socket_server, socket) do
+  defp recv(bot_server, socket_server, socket, client) do
     # EventHandler spawning should possibly be moved to Bot, as there is more immediately
     # available metadata about how to respond and parse the message
-    Slack.Websocket.recv(socket) |> Slack.Bot.EventHandler.handle(bot_server)
-    recv(bot_server, socket_server, socket)
+    Slack.Bot.Socket.recv(socket, client) |> Slack.Bot.EventHandler.handle(bot_server)
+    recv(bot_server, socket_server, socket, client)
   end
 
   defp wait_for_socket(server) do
