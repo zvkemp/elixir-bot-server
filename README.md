@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/zvkemp/elixir-bot-server.svg?branch=master)](https://travis-ci.org/zvkemp/elixir-bot-server)
+
 # Slack Bot Server
 
 Work-in-progress multi-bot server for Slack. Each bot starts its own supervision tree with a number of workers to handle
