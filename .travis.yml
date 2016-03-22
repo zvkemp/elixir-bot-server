@@ -1,6 +1,7 @@
-
 language: elixir
 elixir:
   - 1.2.3
 otp_release:
   - 18.2.1
+before_install:
+  - cp config/dev.exs.empty_example config/dev.exs
