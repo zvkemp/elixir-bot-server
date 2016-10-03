@@ -35,7 +35,7 @@ defmodule Slack.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:httpotion, "~> 2.2.0"},
+      {:httpotion, "~> 3.0.0"},
       {:socket, github: "zvkemp/elixir-socket"},
       {:poison, "~> 2.0"},
       {:mix_test_watch, "~> 0.2", only: :dev}

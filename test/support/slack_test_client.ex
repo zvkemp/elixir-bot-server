@@ -43,4 +43,8 @@ defmodule SocketTestClient do
     send(Process.whereis(:"RECV:#{token}"), data)
     Agent.update(pid, fn (xs) -> [reply|xs] end)
   end
+
+  def register_test_receiver(pid, token) do
+    Process.register(pid, :"RECV:#{token}")
+  end
 end

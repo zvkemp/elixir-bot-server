@@ -1,6 +1,6 @@
-%{"fs": {:hex, :fs, "0.9.2"},
-  "httpotion": {:hex, :httpotion, "2.2.2"},
-  "ibrowse": {:hex, :ibrowse, "4.2.2"},
-  "mix_test_watch": {:hex, :mix_test_watch, "0.2.6"},
-  "poison": {:hex, :poison, "2.1.0"},
+%{"fs": {:hex, :fs, "0.9.2", "ed17036c26c3f70ac49781ed9220a50c36775c6ca2cf8182d123b6566e49ec59", [:rebar], []},
+  "httpotion": {:hex, :httpotion, "3.0.2", "525b9bfeb592c914a61a8ee31fdde3871e1861dfe805f8ee5f711f9f11a93483", [:mix], [{:ibrowse, "~> 4.2", [hex: :ibrowse, optional: false]}]},
+  "ibrowse": {:hex, :ibrowse, "4.2.2", "b32b5bafcc77b7277eff030ed32e1acc3f610c64e9f6aea19822abcadf681b4b", [:rebar3], []},
+  "mix_test_watch": {:hex, :mix_test_watch, "0.2.6", "9fcc2b1b89d1594c4a8300959c19d50da2f0ff13642c8f681692a6e507f92cab", [:mix], [{:fs, "~> 0.9.1", [hex: :fs, optional: false]}]},
+  "poison": {:hex, :poison, "2.1.0", "f583218ced822675e484648fa26c933d621373f01c6c76bd00005d7bd4b82e27", [:mix], []},
   "socket": {:git, "https://github.com/zvkemp/elixir-socket.git", "fd7d726bc91164837b7ed06421b21322da07c8e8", []}}

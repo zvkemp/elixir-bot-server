@@ -16,7 +16,7 @@ defmodule Slack.BotTest.Integration do
   end
 
   setup %{ token: token } = context do
-    Process.register(self, :"RECV:#{token}")
+    SocketTestClient.register_test_receiver(self, token)
     { :ok, context }
   end
 
@@ -38,7 +38,7 @@ defmodule Slack.BotTest.Integration do
 
     # tracks the message
     assert message == GenServer.call(:"#{name}:message_tracker", { :current })[msg_id][:text]
-    :timer.sleep(25) # TODO: replace this wait with something more deterministic
+    :timer.sleep(15) # TODO: replace this wait with something more deterministic
     # cleans up the message upon server receipt
     assert nil == GenServer.call(:"#{name}:message_tracker", { :current })[msg_id]
   end
