@@ -20,7 +20,6 @@ defmodule Slack.Bot.Supervisor do
       worker(Slack.Bot.Socket,             [:"#{name}:socket", ws_url, socket_client]),
       worker(Slack.Bot.Counter,            [:"#{name}:counter"]),
       worker(Slack.Bot.MessageTracker,     [:"#{name}:message_tracker"]),
-      worker(Slack.Bot.Data,               [:"#{name}:data"]),
       worker(Slack.Bot.Outbox,             [:"#{name}:outbox", :"#{name}:socket", config[:rate_limit]]),
       worker(Task,                         [Slack.Bot.Timer.ping_fn(:"#{name}:bot", config[:ping_frequency] || 10000)], id: :ping_timer),
       # maybe this should be joined with Frog.Socket in another supervisor?

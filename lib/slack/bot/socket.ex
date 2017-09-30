@@ -46,7 +46,7 @@ defmodule Slack.Bot.Socket do
   def recv(socket, client) do
     response = socket |> client.recv
     case response do
-      { :ok, { :text, body } } -> Poison.decode!(body)
+      { :ok, { :text, body } } -> Poison.decode!(body) # |> IO.inspect
       { :ok, { :ping, _    } } -> { :ping }
       :ok -> nil
       e -> raise "Something went wrong: #{inspect e}"

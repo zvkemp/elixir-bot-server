@@ -9,7 +9,7 @@ defmodule Slack.Bot.Outbox do
   end
 
   def handle_cast({ :push, msg }, { socket_name, rate_limit }) do
-    IO.inspect({msg, socket_name, rate_limit})
+    # IO.inspect({msg, socket_name, rate_limit})
     GenServer.call(socket_name, { :push, msg })
     :timer.sleep(rate_limit) # hmmm
     { :noreply, {socket_name, rate_limit} }
