@@ -4,8 +4,6 @@ defmodule Slack.Bot.MessageTracker do
   arrives with the same "reply_to" id.
   """
 
-  # TODO: most 'message' types are not replied to, so they're just hanging out
-  # on the tracker without being acked.
   # TODO: skip ping if a message has been sent within the last 10 seconds.
   use GenServer
 

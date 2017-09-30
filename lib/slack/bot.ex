@@ -55,6 +55,7 @@ defmodule Slack.Bot do
   # NOTE: removed the "ok" => true matcher (not included in pongs).
   # May want to re-add it at some point.
   defp process_receipt(name, %{ "reply_to" => id } = msg, _config) do
+    # IO.inspect({:receipt, msg})
     GenServer.call(:"#{name}:message_tracker", { :reply, id, msg })
   end
 

@@ -20,6 +20,9 @@ defmodule Slack.Console do
 end
 
 defmodule Slack.Console.PubSub do
+  @moduledoc """
+  Acts as the remote side of the slack simulator
+  """
   use GenServer
   require Logger
 
@@ -74,7 +77,20 @@ defmodule Slack.Console.PubSub do
              |> Map.keys
              |> Enum.filter(fn ^from_socket -> false; _ -> true end)
     Task.start(fn -> Enum.each(queues, fn q -> Queue.push(q, message) end) end)
+    send_receipt(unencoded_message, from_socket)
     {:noreply, channels}
+  end
+
+  defp send_receipt(msg, nil), do: nil # was not sent by a bot
+
+  defp send_receipt(msg, from_socket) do
+    receipt = Map.merge(msg, %{
+      "ts" => :os.system_time / 1000000000,
+      "ok" => true,
+      "reply_to" => msg["id"]
+    })
+
+    Queue.push(from_socket, Poison.encode!(receipt))
   end
 end
 
