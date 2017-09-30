@@ -13,7 +13,7 @@ defmodule Slack.Bot.Supervisor do
     %{
       "self" => %{ "id" => uid },
       "url"  => ws_url
-    } = meta = api_client.auth_request(token)
+    } = meta = api_client.auth_request(token, name)
 
     children = [
       worker(Slack.Bot,                    [:"#{name}:bot", Map.put(config, :id, uid)]),

@@ -10,7 +10,7 @@ defmodule Slack.API do
               leave_channel: "channels.leave" }
   @json_headers ["Content-Type": "application/json", "Accepts": "application/json"]
 
-  def auth_request(token) do
+  def auth_request(token, _internal_name \\ nil) do
     post_method(:auth, %{ token: token })
   end
 

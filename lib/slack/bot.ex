@@ -11,7 +11,7 @@ defmodule Slack.Bot do
     GenServer.start_link(__MODULE__, { :ok, config }, name: name)
   end
 
-  def ping!(name), do: send_payload(name, %{ type: "ping" })
+  def ping!(name), do: send_payload(name, %{type: "ping"})
 
   def say(name, text, channel \\ nil) do
     send_payload(name, %{ type: "message", text: text, channel: channel || default_channel() })

@@ -1,5 +1,5 @@
 defmodule Slack.Behaviours.API do
-  @callback auth_request(token :: String.t) :: Map.t
+  @callback auth_request(token :: String.t, internal_name :: String.t | nil) :: Map.t
   @callback join_channel(channel :: String.t, token :: String.t) :: Map.t
 
   defmacro __using__(_) do

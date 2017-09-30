@@ -1,7 +1,7 @@
 defmodule SlackTestClient do
   use Slack.Behaviours.API
 
-  def auth_request(token) do
+  def auth_request(token, _internal_name) do
     %{
        "url" => "ws://test.host/#{token}",
        "self" => %{ "id" => "ID#{token}" }

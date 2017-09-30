@@ -6,13 +6,16 @@ defmodule Slack.Console do
 
   def init(_args) do
     Supervisor.init([
-      {Slack.Console.PubSub, []},
-      supervisor(Registry, [:unique, :user_socket_registry])
+      {Slack.Console.PubSub, []}
     ], strategy: :one_for_one)
   end
 
   def start_link do
     Supervisor.start_link(__MODULE__, nil, name: __MODULE__)
+  end
+
+  def say(msg) do
+    Slack.Console.PubSub.message(msg)
   end
 end
 
@@ -77,7 +80,7 @@ end
 
 defmodule Slack.Console.Socket do
   @moduledoc """
-  Stands in for slack websocket client. `socket` refers to an inbound Queue genserver
+  Stands in for slack websocket client module. `socket` refers to an inbound Queue genserver
   """
   require Logger
 
@@ -126,7 +129,7 @@ defmodule Slack.Console.Socket do
 end
 
 defmodule Slack.Console.APIClient do
-  def auth_request(token) do
-    %{ "self" => %{ "id" => token }, "url" => "internal/user/#{token}" }
+  def auth_request(token, internal_name) do
+    %{ "self" => %{ "id" => token }, "url" => "user/#{internal_name}" }
   end
 end
