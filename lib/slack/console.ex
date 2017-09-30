@@ -95,7 +95,8 @@ defmodule Slack.Console.Socket do
   end
 
   def recv(socket) do
-    case Queue.pop(socket, 10_000) do
+    # ping freq is 10_000
+    case Queue.pop(socket, 11_000) do
       {:error, _} = e ->
         Logger.error({socket, e} |> inspect)
       val ->

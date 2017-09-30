@@ -18,7 +18,6 @@ defmodule Slack.Bot.Supervisor do
     children = [
       worker(Slack.Bot,                    [:"#{name}:bot", Map.put(config, :id, uid)]),
       worker(Slack.Bot.Socket,             [:"#{name}:socket", ws_url, socket_client]),
-      worker(Slack.Bot.Counter,            [:"#{name}:counter"]),
       worker(Slack.Bot.MessageTracker,     [:"#{name}:message_tracker"]),
       worker(Slack.Bot.Outbox,             [:"#{name}:outbox", :"#{name}:socket", config[:rate_limit]]),
       worker(Task,                         [Slack.Bot.Timer.ping_fn(:"#{name}:bot", config[:ping_frequency] || 10000)], id: :ping_timer),

@@ -14,7 +14,7 @@ defmodule Slack.Bot do
   def ping!(name), do: send_payload(name, %{ type: "ping" })
 
   def say(name, text, channel \\ nil) do
-    send_payload(name, %{ type: "message", text: text, channel: channel || default_channel })
+    send_payload(name, %{ type: "message", text: text, channel: channel || default_channel() })
   end
 
   # ---
@@ -32,7 +32,7 @@ defmodule Slack.Bot do
     Slack.default_channel
   end
 
-  def handle_cast({ :ping }, %{ name: name } = state) do
+  def handle_cast(:ping, %{ name: name } = state) do
     ping!(name)
     { :noreply, state }
   end
@@ -47,21 +47,14 @@ defmodule Slack.Bot do
   end
 
   # append new message id to payloads with none
-  defp send_payload(name, %{ id: _id } = payload) do
-    GenServer.call(:"#{name}:message_tracker", { :push, payload })
-    GenServer.cast(:"#{name}:outbox", { :push, payload })
-  end
   defp send_payload(name, payload) do
-    send_payload(name, Map.put(payload, :id, new_message_id(name)) )
-  end
-
-  defp new_message_id(name) do
-    GenServer.call(:"#{name}:counter", { :tick })
+    {:ok, id} = GenServer.call(:"#{name}:message_tracker", {:push, payload})
+    GenServer.cast(:"#{name}:outbox", {:push, Map.put(payload, :id, id)})
   end
 
   # NOTE: removed the "ok" => true matcher (not included in pongs).
   # May want to re-add it at some point.
-  defp process_receipt(name, %{ "reply_to" => id } = msg, config) do
+  defp process_receipt(name, %{ "reply_to" => id } = msg, _config) do
     GenServer.call(:"#{name}:message_tracker", { :reply, id, msg })
   end
 
@@ -69,9 +62,9 @@ defmodule Slack.Bot do
     apply(responder, :respond, [name, msg, c])
   end
 
-  defp process_receipt(name, %{ "type" => "hello" } = msg, config) do
+  defp process_receipt(name, %{ "type" => "hello" }, _config) do
     Logger.info("[bot:#{name}] Received \"hello\".")
   end
 
-  defp process_receipt(name, msg, config), do: nil
+  defp process_receipt(_name, _msg, _config), do: nil
 end

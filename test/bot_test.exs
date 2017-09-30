@@ -37,10 +37,11 @@ defmodule Slack.BotTest.Integration do
     }})
 
     # tracks the message
-    assert message == GenServer.call(:"#{name}:message_tracker", { :current })[msg_id][:text]
+    {state, counter} = GenServer.call(:"#{name}:message_tracker", :current)
+    assert message == state[msg_id][:text]
     :timer.sleep(15) # TODO: replace this wait with something more deterministic
     # cleans up the message upon server receipt
-    assert nil == GenServer.call(:"#{name}:message_tracker", { :current })[msg_id]
+    assert {%{}, _} = GenServer.call(:"#{name}:message_tracker", :current)
   end
 end
 
