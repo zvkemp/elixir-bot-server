@@ -5,30 +5,22 @@ defmodule Slack.Bot.Receiver do
   """
 
   # Recursively streams packets from the websocket to the Bot controller
-  def recv_task(bot_server, socket_server) do
-    fn -> recv(bot_server, socket_server) end
+  def start_link(bot, sock, client) do
+    Task.start_link(new_recv_task(bot, sock, client))
   end
 
-  # this is called until the socket is available
-  defp recv(bot_server, socket_server) do
-    { sock, client } = wait_for_socket(socket_server)
-    recv(bot_server, socket_server, sock, client)
+  defp new_recv_task(bot_server, socket, client_module) do
+    fn -> new_recv(bot_server, socket, client_module) end
   end
 
-  # this is called recursively until the supervisor exits.
-  defp recv(bot_server, socket_server, socket, client) do
-    # EventHandler spawning should possibly be moved to Bot, as there is more immediately
-    # available metadata about how to respond and parse the message
-    Slack.Bot.Socket.recv(socket, client) |> Slack.Bot.EventHandler.handle(bot_server)
-    recv(bot_server, socket_server, socket, client)
-  end
+  defp new_recv(bot_server, socket, client_module) do
+    case client_module.recv(socket) do
+      {:ok, {:text, body}} -> Poison.decode!(body)
+      {:ok, {:ping, _}} -> {:ping}
+      :ok -> nil
+      e -> raise "Something went wrong: #{inspect e}"
+    end |> Slack.Bot.EventHandler.handle(bot_server)
 
-  defp wait_for_socket(server) do
-    cond do
-      Process.whereis(server) -> GenServer.call(server, { :socket })
-      true ->
-        :timer.sleep(500)
-        wait_for_socket(server)
-    end
+    new_recv(bot_server, socket, client_module)
   end
 end

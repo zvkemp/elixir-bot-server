@@ -6,50 +6,32 @@ defmodule Slack.Bot.Socket do
   # TODO: Make this die on Websocket disconnects / errors
   use GenServer
 
-  def start_link(name, ws_url, client) do
-    GenServer.start_link(__MODULE__, {:ok, ws_url, client}, name: name)
+  def start_link(name, ws_url, client, bot_name) do
+    GenServer.start_link(__MODULE__, {:ok, ws_url, client, bot_name}, name: name)
   end
 
   # CALLBACKS
   @impl true
-  def init({ :ok, ws_url, client }) do
-    { :ok, {connect(ws_url, client),client}}
+  def init({:ok, ws_url, client, bot_name}) do
+    { :ok, {connect(ws_url, client, bot_name),client}}
   end
 
   @impl true
-  def handle_call({ :push, payload }, _from, {socket, client}) do
+  def handle_call({:push, payload}, _from, {socket, client}) do
     outcome = socket |> send_payload(payload, client)
-    { :reply, outcome, {socket, client}}
-  end
-
-  @impl true
-  def handle_call({ :recv }, _from, {socket, client}) do
-    { :reply, socket |> recv(client), {socket, client}}
-  end
-
-  @impl true
-  def handle_call({ :socket }, _from, state) do
-    { :reply, state, state }
+    {:reply, outcome, {socket, client}}
   end
 
   # SOCKET MANAGEMENT
 
-  defp connect(ws_url, client) do
+  defp connect(ws_url, client, bot_name) do
     %{ host: host, path: path } = URI.parse(ws_url)
-    client.connect!(host, path: path, secure: true)
+    sock = client.connect!(host, path: path, secure: true) |> IO.inspect
+    Slack.Bot.Receiver.start_link(bot_name, sock, client)
+    sock
   end
 
   defp send_payload(socket, payload, client) do
     socket |> client.send!({ :text, Poison.encode!(payload) })
-  end
-
-  def recv(socket, client) do
-    response = socket |> client.recv
-    case response do
-      { :ok, { :text, body } } -> Poison.decode!(body) # |> IO.inspect
-      { :ok, { :ping, _    } } -> { :ping }
-      :ok -> nil
-      e -> raise "Something went wrong: #{inspect e}"
-    end
   end
 end
