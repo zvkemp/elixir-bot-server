@@ -44,8 +44,8 @@ defmodule Slack.ApplicationSupervisor do
 
   def init(_arg) do
     children = [
-      supervisor(Slack.BotRegistry, [bot_configs]),
-      supervisor(Slack.Console, [])
+      supervisor(Slack.Console, []),
+      supervisor(Slack.BotRegistry, [bot_configs])
     ]
 
     # if use_console?, do: Slack.Console.start_link([])

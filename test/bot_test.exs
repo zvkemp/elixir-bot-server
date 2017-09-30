@@ -1,7 +1,7 @@
 defmodule Slack.BotTest.Integration do
   use ExUnit.Case, async: true
   setup_all do
-    [name, token] = [6, 9] |> Enum.map(&(:crypto.rand_bytes(&1) |> Base.encode64))
+    [name, token] = [6, 9] |> Enum.map(&(:crypto.strong_rand_bytes(&1) |> Base.encode64))
     config = %{
       name: name,
       token: token,

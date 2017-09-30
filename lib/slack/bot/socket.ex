@@ -11,22 +11,25 @@ defmodule Slack.Bot.Socket do
   end
 
   # CALLBACKS
+  @impl true
+  def init({ :ok, ws_url, client }) do
+    { :ok, {connect(ws_url, client),client}}
+  end
 
+  @impl true
   def handle_call({ :push, payload }, _from, {socket, client}) do
     outcome = socket |> send_payload(payload, client)
     { :reply, outcome, {socket, client}}
   end
 
+  @impl true
   def handle_call({ :recv }, _from, {socket, client}) do
     { :reply, socket |> recv(client), {socket, client}}
   end
 
+  @impl true
   def handle_call({ :socket }, _from, state) do
     { :reply, state, state }
-  end
-
-  def init({ :ok, ws_url, client }) do
-    { :ok, {connect(ws_url, client),client}}
   end
 
   # SOCKET MANAGEMENT
@@ -45,6 +48,7 @@ defmodule Slack.Bot.Socket do
     case response do
       { :ok, { :text, body } } -> Poison.decode!(body)
       { :ok, { :ping, _    } } -> { :ping }
+      :ok -> nil
       e -> raise "Something went wrong: #{inspect e}"
     end
   end
