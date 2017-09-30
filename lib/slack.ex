@@ -2,7 +2,11 @@ defmodule Slack do
   use Application
 
   def start(_type, _args) do
-    Slack.BotRegistry.start_link(bot_configs)
+    Slack.ApplicationSupervisor.start_link
+  end
+
+  def use_console? do
+    Application.get_env(:slack, :use_console, false)
   end
 
   def start_bot(name) when is_binary(name) or is_atom(name) do
@@ -24,6 +28,30 @@ defmodule Slack do
 
   defp default_bot_config do
     bot_configs |> Enum.at(0)
+  end
+
+  defp bot_configs do
+    Application.get_env(:slack, :bots, [])
+  end
+end
+
+defmodule Slack.ApplicationSupervisor do
+  use Supervisor
+
+  def start_link do
+    Supervisor.start_link(__MODULE__, nil, name: __MODULE__)
+  end
+
+  def init(_arg) do
+    children = [
+      supervisor(Slack.BotRegistry, [bot_configs]),
+      supervisor(Slack.Console, [])
+    ]
+
+    # if use_console?, do: Slack.Console.start_link([])
+    #IO.inspect(use_console?)
+    #Slack.BotRegistry.start_link(bot_configs)
+    supervise(children, strategy: :one_for_one)
   end
 
   defp bot_configs do

@@ -1,6 +1,5 @@
 # Simple rate-limiting outbox - very much a WIP
 defmodule Slack.Bot.Outbox do
-
   def start_link(name, socket_name, nil) do
     start_link(name, socket_name)
   end
