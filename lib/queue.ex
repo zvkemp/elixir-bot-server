@@ -34,7 +34,7 @@ defmodule Queue do
     GenServer.call(q, {:unregister_waiter, ref})
   end
 
-  def handle_call({:unregister_waiter, ref}, {pid, _}, {queue,waiters}) do
+  def handle_call({:unregister_waiter, ref}, {pid, _}, {queue, waiters}) do
     # Filters on original call ref and same pid
     new_waiters = :queue.filter(fn {^pid, ^ref} -> false; _ -> true end, waiters)
     {:reply, :ok, {queue, new_waiters}}

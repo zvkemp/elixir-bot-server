@@ -1,17 +1,17 @@
 defmodule Slack.Bot.Supervisor do
   use Supervisor
 
-  def start_link(%{ name: name } = config) do
-    Supervisor.start_link(__MODULE__, { :ok, config }, name: "#{name}:supervisor" |> String.to_atom)
+  def start_link(%{name: name} = config) do
+    Supervisor.start_link(__MODULE__, config, name: "#{name}:supervisor" |> String.to_atom)
   end
 
   # ---
 
-  def init({ :ok, %{ name: name, token: token } = config }) do
+  def init(%{name: name, token: token} = config) do
     api_client    = Map.get(config, :api_client, Slack.API)
     socket_client = Map.get(config, :socket_client, Socket.Web)
     %{
-      "self" => %{ "id" => uid },
+      "self" => %{"id" => uid},
       "url"  => ws_url
     } = meta = api_client.auth_request(token, name)
 

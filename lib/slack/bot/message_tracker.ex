@@ -19,7 +19,7 @@ defmodule Slack.Bot.MessageTracker do
   end
 
   def init({bot, ping_freq}) do
-    {:ok, %S{ ping_ref: reset_ping_timer(ping_freq), bot: bot, ping_freq: ping_freq}}
+    {:ok, %S{ping_ref: reset_ping_timer(ping_freq), bot: bot, ping_freq: ping_freq}}
   end
 
   def handle_info(:ping, %S{} = s) do

@@ -8,23 +8,25 @@ defmodule Slack.Bot do
   require Logger
 
   def start_link(name, config) do
-    GenServer.start_link(__MODULE__, { :ok, config }, name: name)
+    GenServer.start_link(__MODULE__, config, name: name)
   end
 
   def ping!(name), do: send_payload(name, %{type: "ping"})
 
   def say(name, text, channel \\ nil) do
-    send_payload(name, %{ type: "message", text: text, channel: channel || default_channel() })
+    send_payload(name, %{type: "message", text: text, channel: channel || default_channel()})
   end
 
   # ---
 
-  def init({ :ok, %{} = config }) do
-    { :ok, config }
+  @impl true
+  def init(%{} = config) do
+    {:ok, config}
   end
 
-  def init({ :ok, _ = config }) do
-    { :error, config }
+  @impl true
+  def init(config) do
+    {:error, config}
   end
 
   # TODO
@@ -32,18 +34,21 @@ defmodule Slack.Bot do
     Slack.default_channel
   end
 
-  def handle_cast(:ping, %{ name: name } = state) do
+  @impl true
+  def handle_cast(:ping, %{name: name} = state) do
     ping!(name)
-    { :noreply, state }
+    {:noreply, state}
   end
 
-  def handle_cast({ :event, payload }, %{ name: name } = state) do
+  @impl true
+  def handle_cast({:event, payload}, %{name: name} = state) do
     process_receipt(name, payload, state)
-    { :noreply, state }
+    {:noreply, state}
   end
 
-  def handle_cast({ :mod_config, data }, state) do
-    { :noreply, Map.merge(state, data) }
+  @impl true
+  def handle_cast({:mod_config, data}, state) do
+    {:noreply, Map.merge(state, data)}
   end
 
   # append new message id to payloads with none
@@ -54,18 +59,20 @@ defmodule Slack.Bot do
 
   # NOTE: removed the "ok" => true matcher (not included in pongs).
   # May want to re-add it at some point.
-  defp process_receipt(name, %{ "reply_to" => id } = msg, _config) do
+  defp process_receipt(name, %{"reply_to" => id} = msg, _config) do
     # IO.inspect({:receipt, msg})
-    GenServer.call(:"#{name}:message_tracker", { :reply, id, msg })
+    GenServer.call(:"#{name}:message_tracker", {:reply, id, msg})
   end
 
-  defp process_receipt(name, %{ "type" => "message" } = msg, %{ responder: responder } = c) do
+  defp process_receipt(name, %{"type" => "message"} = msg, %{responder: responder} = c) do
     apply(responder, :respond, [name, msg, c])
   end
 
-  defp process_receipt(name, %{ "type" => "hello" }, _config) do
+  defp process_receipt(name, %{"type" => "hello"}, _config) do
     Logger.info("[bot:#{name}] Received \"hello\".")
   end
 
-  defp process_receipt(_name, _msg, _config), do: nil
+  defp process_receipt(name, msg, _config) do
+    Logger.debug("[bot:#{name}] Received unhandled: #{inspect(msg)}")
+  end
 end

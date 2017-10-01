@@ -3,6 +3,8 @@ defmodule Slack.Bot.Socket do
   Simple server wrapper around a websocket
   """
 
+  alias Slack.Bot.Receiver
+
   # TODO: Make this die on Websocket disconnects / errors
   use GenServer
 
@@ -13,7 +15,7 @@ defmodule Slack.Bot.Socket do
   # CALLBACKS
   @impl true
   def init({:ok, ws_url, client, bot_name}) do
-    { :ok, {connect(ws_url, client, bot_name),client}}
+    {:ok, {connect(ws_url, client, bot_name), client}}
   end
 
   @impl true
@@ -25,13 +27,13 @@ defmodule Slack.Bot.Socket do
   # SOCKET MANAGEMENT
 
   defp connect(ws_url, client, bot_name) do
-    %{ host: host, path: path } = URI.parse(ws_url)
-    sock = client.connect!(host, path: path, secure: true) |> IO.inspect
+    %{host: host, path: path} = URI.parse(ws_url)
+    sock = client.connect!(host, path: path, secure: true)
     Slack.Bot.Receiver.start_link(bot_name, sock, client)
     sock
   end
 
   defp send_payload(socket, payload, client) do
-    socket |> client.send!({ :text, Poison.encode!(payload) })
+    socket |> client.send!({:text, Poison.encode!(payload)})
   end
 end

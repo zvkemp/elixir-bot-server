@@ -54,7 +54,7 @@ defmodule Slack.Console.PubSub do
     GenServer.cast(__MODULE__, {:broadcast, channel, message, socket})
   end
 
-  def handle_call({:subscribe, channel, socket, user_key}, from, channels) do
+  def handle_call({:subscribe, channel, socket, user_key}, _from, channels) do
     new_state = Map.update(channels, channel, %{socket => user_key}, fn (ch) ->
       Map.put(ch, socket, user_key)
     end)
@@ -62,8 +62,8 @@ defmodule Slack.Console.PubSub do
   end
 
   def handle_cast({:broadcast, channel, unencoded_message, from_socket}, channels) do
-    uid = channels[channel][from_socket] || "console user"
-    message = Map.put(unencoded_message, "user", uid) |> Poison.encode!
+    uid     = channels[channel][from_socket] || "console user"
+    message = unencoded_message |> Map.put("user", uid) |> Poison.encode!
 
     [:red, "[#{channel}]", :yellow, "[#{uid}] ", :green, unencoded_message["text"]]
     |> IO.ANSI.format
@@ -73,19 +73,22 @@ defmodule Slack.Console.PubSub do
     # Logger.debug("[#{channel}] :: #{message} #{inspect(uid)}")
 
     # don't deliver to sending socket
-    queues = Map.get(channels, channel, %{})
-             |> Map.keys
-             |> Enum.filter(fn ^from_socket -> false; _ -> true end)
+    queues = channels |> Map.get(channel, %{})
+                      |> Map.keys
+                      |> Enum.filter(fn
+                        ^from_socket -> false
+                        _ -> true
+                      end) |> IO.inspect
     Task.start(fn -> Enum.each(queues, fn q -> Queue.push(q, message) end) end)
     send_receipt(unencoded_message, from_socket)
     {:noreply, channels}
   end
 
-  defp send_receipt(msg, nil), do: nil # was not sent by a bot
+  defp send_receipt(_msg, nil), do: nil # was not sent by a bot
 
   defp send_receipt(msg, from_socket) do
     receipt = Map.merge(msg, %{
-      "ts" => :os.system_time / 1000000000,
+      "ts" => :os.system_time / 1_000_000_000,
       "ok" => true,
       "reply_to" => msg["id"]
     })
@@ -101,8 +104,8 @@ defmodule Slack.Console.Socket do
   require Logger
 
   # returns a pid
-  def connect!(_host, opts) do
-    Logger.info("connect: #{[_host, opts] |> inspect}")
+  def connect!(host, opts) do
+    Logger.info("connect: #{[host, opts] |> inspect}")
     # path stands in for UID here
     do_connect!(opts[:path])
   end
@@ -120,12 +123,11 @@ defmodule Slack.Console.Socket do
         Logger.error({socket, e} |> inspect)
       val ->
         # Logger.info("<<< #{val} #{socket |> inspect}")
-        {:ok, {:text, val }}
+        {:ok, {:text, val}}
     end
   end
 
-  def send!(socket, {:text, val} = payload) do
-    # Logger.warn(">>> #{%{ sender: self(), socket: socket } |> inspect} sending #{val}")
+  def send!(socket, {:text, _val} = payload) do
     handle_payload(payload, socket)
   end
 
@@ -145,7 +147,13 @@ defmodule Slack.Console.Socket do
 end
 
 defmodule Slack.Console.APIClient do
+  use Slack.Behaviours.API
+
+  @impl true
   def auth_request(token, internal_name) do
-    %{ "self" => %{ "id" => token }, "url" => "user/#{internal_name}" }
+    %{"self" => %{"id" => token}, "url" => "user/#{internal_name}"}
   end
+
+  @impl true
+  def join_channel(_, _), do: %{}
 end

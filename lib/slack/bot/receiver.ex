@@ -6,21 +6,22 @@ defmodule Slack.Bot.Receiver do
 
   # Recursively streams packets from the websocket to the Bot controller
   def start_link(bot, sock, client) do
-    Task.start_link(new_recv_task(bot, sock, client))
+    Task.start_link(recv_task(bot, sock, client))
   end
 
-  defp new_recv_task(bot_server, socket, client_module) do
-    fn -> new_recv(bot_server, socket, client_module) end
+  defp recv_task(bot_server, socket, client_module) do
+    fn -> recv(bot_server, socket, client_module) end
   end
 
-  defp new_recv(bot_server, socket, client_module) do
-    case client_module.recv(socket) do
+  defp recv(bot_server, socket, client_module) do
+    event = case client_module.recv(socket) do
       {:ok, {:text, body}} -> Poison.decode!(body)
       {:ok, {:ping, _}} -> {:ping}
       :ok -> nil
       e -> raise "Something went wrong: #{inspect e}"
-    end |> Slack.Bot.EventHandler.handle(bot_server)
+    end
 
-    new_recv(bot_server, socket, client_module)
+    Slack.Bot.EventHandler.handle(event, bot_server)
+    recv(bot_server, socket, client_module)
   end
 end

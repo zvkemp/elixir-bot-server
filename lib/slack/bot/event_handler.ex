@@ -5,6 +5,6 @@ defmodule Slack.Bot.EventHandler do
   end
 
   def go(event, bot_server) do
-    GenServer.cast(bot_server, { :event, event })
+    GenServer.cast(bot_server, {:event, event})
   end
 end
