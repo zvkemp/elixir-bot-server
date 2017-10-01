@@ -6,11 +6,11 @@ defmodule Slack.BotRegistry do
   use Supervisor
 
   def start_link(configs) do
-    Supervisor.start_link(__MODULE__, { :ok, configs }, name: Slack.BotRegistry)
+    Supervisor.start_link(__MODULE__, configs, name: Slack.BotRegistry)
   end
 
-  def init({ :ok, configs }) do
-    children = configs |> Enum.map(fn (%{ name: name } = config) ->
+  def init(configs) do
+    children = configs |> Enum.map(fn (%{name: name} = config) ->
       supervisor(Slack.Bot.Supervisor, [config], id: :"registered:#{name}")
     end)
 

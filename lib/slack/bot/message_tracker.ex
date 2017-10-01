@@ -6,27 +6,49 @@ defmodule Slack.Bot.MessageTracker do
 
   use GenServer
 
-  def start_link(name) do
-    GenServer.start_link(__MODULE__, :ok, name: name)
+  defmodule State do
+    defstruct messages: %{}, counter: 1, ping_ref: nil, bot: nil, ping_freq: 10_000
   end
 
-  def init(:ok) do
-    { :ok, %{} }
+  alias Slack.Bot.MessageTracker.State, as: S
+
+  @ping_ms 10_000
+
+  def start_link(name, bot, ping_freq \\ @ping_ms) do
+    GenServer.start_link(__MODULE__, {bot, ping_freq}, name: name)
   end
 
-  def handle_call({ :push, %{ id: id } = payload }, _from, state) do
-    { :reply, :ok, Map.put(state, id, payload) }
+  def init({bot, ping_freq}) do
+    {:ok, %S{ping_ref: reset_ping_timer(ping_freq), bot: bot, ping_freq: ping_freq}}
   end
 
-  def handle_call({ :reply, id, payload }, _from, state) do
-    { :reply, :ok, Map.delete(state, id) }
+  def handle_info(:ping, %S{} = s) do
+    GenServer.cast(s.bot, :ping)
+    {:noreply, %S{s | ping_ref: reset_ping_timer(s.ping_freq, s.ping_ref)}}
   end
 
-  def handle_call({ :outstanding? }, _from, state) do
-    { :reply, Enum.any?(state), state }
+  defp reset_ping_timer(ms, ping_ref \\ nil) do
+    if ping_ref, do: :timer.cancel(ping_ref)
+    {:ok, new_ping_ref} = :timer.send_after(ms, :ping)
+    new_ping_ref
   end
 
-  def handle_call({ :current }, _from, state) do
-    { :reply, state, state }
+  def handle_call({:push, payload}, _from, %S{} = s) do
+    counter = s.counter + 1
+    new_ping_ref = if payload[:type] == "ping", do: s.ping_ref, else: reset_ping_timer(s.ping_freq, s.ping_ref)
+
+    {
+      :reply,
+      {:ok, counter},
+      %S{s | messages: Map.put(s.messages, counter, payload), counter: counter , ping_ref: new_ping_ref}
+    }
+  end
+
+  def handle_call({:reply, id, payload}, _from, %S{} = s) do
+    {:reply, :ok, %S{s | messages: Map.delete(s.messages, id)}}
+  end
+
+  def handle_call(:current, _from, state) do
+    {:reply, state, state}
   end
 end
