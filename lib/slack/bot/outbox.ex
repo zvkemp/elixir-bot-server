@@ -11,6 +11,8 @@ defmodule Slack.Bot.Outbox do
 
   @impl true
   def handle_cast({:push, msg}, {socket_name, rate_limit}) do
+    require Logger
+    Logger.debug({:out, msg} |> inspect)
     sleeper = Task.async(fn -> :timer.sleep(rate_limit) end)
     GenServer.call(socket_name, {:push, msg})
     Task.await(sleeper)
