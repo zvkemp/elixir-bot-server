@@ -50,6 +50,8 @@ defmodule Slack.Supervisor do
   end
 
   defp bot_configs do
-    Application.get_env(:slack, :bots, [])
+    :slack
+    |> Application.get_env(:bots, [])
+    |> Enum.map(&Map.merge(%Slack.Bot.Config{}, &1))
   end
 end

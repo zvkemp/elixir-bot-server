@@ -7,26 +7,47 @@ defmodule Slack.Bot do
   use GenServer
   require Logger
 
+  defmodule Config do
+    defstruct [
+      id: nil, # Usually set by the result of an API call
+      name: nil,
+      socket_client: Socket.Web,
+      api_client: Slack.API,
+      token: nil,
+      ribbit_msg: nil,
+      responder: nil,
+      keywords: %{},
+      ping_frequency: 10_000,
+      rate_limit: 1 # messages per second
+    ]
+  end
+
+  alias Slack.Bot.Config
+
   def start_link(name, config) do
     GenServer.start_link(__MODULE__, config, name: name)
   end
 
   def ping!(name), do: send_payload(name, %{type: "ping"})
 
-  def say(name, text, channel \\ nil) do
+  def say(name, text, channel \\ nil)
+
+  def say(_, nil, _), do: nil
+
+  def say(name, text, channel) do
     send_payload(name, %{type: "message", text: text, channel: channel || default_channel()})
   end
 
   # ---
 
   @impl true
-  def init(%{} = config) do
+  def init(%Config{} = config) do
     {:ok, config}
   end
 
   @impl true
-  def init(config) do
-    {:error, config}
+  def init(%{} = config) do
+    {:ok, Map.merge(%Config{}, config)}
   end
 
   # TODO
@@ -35,15 +56,15 @@ defmodule Slack.Bot do
   end
 
   @impl true
-  def handle_cast(:ping, %{name: name} = state) do
-    ping!(name)
-    {:noreply, state}
+  def handle_cast(:ping, config) do
+    ping!(config.name)
+    {:noreply, config}
   end
 
   @impl true
-  def handle_cast({:event, payload}, %{name: name} = state) do
-    process_receipt(name, payload, state)
-    {:noreply, state}
+  def handle_cast({:event, payload}, config) do
+    process_receipt(config.name, payload, config)
+    {:noreply, config}
   end
 
   @impl true
@@ -64,8 +85,8 @@ defmodule Slack.Bot do
     GenServer.call(:"#{name}:message_tracker", {:reply, id, msg})
   end
 
-  defp process_receipt(name, %{"type" => "message"} = msg, %{responder: responder} = c) do
-    apply(responder, :respond, [name, msg, c])
+  defp process_receipt(name, %{"type" => "message"} = msg, config) do
+    apply(config.responder, :respond, [name, msg, config])
   end
 
   defp process_receipt(name, %{"type" => "hello"}, _config) do
@@ -73,6 +94,6 @@ defmodule Slack.Bot do
   end
 
   defp process_receipt(name, msg, _config) do
-    Logger.debug("[bot:#{name}] Received unhandled: #{inspect(msg)}")
+    Logger.debug(fn -> "[bot:#{name}] Received unhandled: #{inspect(msg)}" end)
   end
 end

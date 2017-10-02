@@ -78,7 +78,7 @@ defmodule Slack.Console.PubSub do
                       |> Enum.filter(fn
                         ^from_socket -> false
                         _ -> true
-                      end) |> IO.inspect
+                      end)
     Task.start(fn -> Enum.each(queues, fn q -> Queue.push(q, message) end) end)
     send_receipt(unencoded_message, from_socket)
     {:noreply, channels}

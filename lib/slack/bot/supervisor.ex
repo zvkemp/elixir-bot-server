@@ -7,20 +7,17 @@ defmodule Slack.Bot.Supervisor do
 
   # ---
 
-  def init(%{name: name, token: token} = config) do
-    api_client    = Map.get(config, :api_client, Slack.API)
-    socket_client = Map.get(config, :socket_client, Socket.Web)
+  def init(%Slack.Bot.Config{} = c) do
     %{
       "self" => %{"id" => uid},
       "url"  => ws_url
-    } = meta = api_client.auth_request(token, name)
+    } = c.api_client.auth_request(c.token, c.name)
 
     children = [
-      worker(Slack.Bot,                    [:"#{name}:bot", Map.put(config, :id, uid)]),
-      worker(Slack.Bot.Socket,             [:"#{name}:socket", ws_url, socket_client, :"#{name}:bot"]),
-      worker(Slack.Bot.MessageTracker,     [:"#{name}:message_tracker", :"#{name}:bot", config[:ping_frequency] || 10_000]),
-      worker(Slack.Bot.Outbox,             [:"#{name}:outbox", :"#{name}:socket", config[:rate_limit]]),
-      # worker(Task,                         [Slack.Bot.Timer.ping_fn(:"#{name}:bot", config[:ping_frequency] || 10000)], id: :ping_timer)
+      worker(Slack.Bot,                    [:"#{c.name}:bot", Map.put(c, :id, uid)]),
+      worker(Slack.Bot.Socket,             [:"#{c.name}:socket", ws_url, c.socket_client, :"#{c.name}:bot"]),
+      worker(Slack.Bot.MessageTracker,     [:"#{c.name}:message_tracker", :"#{c.name}:bot", c.ping_frequency || 10_000]),
+      worker(Slack.Bot.Outbox,             [:"#{c.name}:outbox", :"#{c.name}:socket", c.rate_limit])
     ]
 
     supervise(children, strategy: :rest_for_one)
