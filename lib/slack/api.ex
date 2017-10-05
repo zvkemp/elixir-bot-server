@@ -26,6 +26,10 @@ defmodule Slack.API do
     post_method(:channels, %{token: token})
   end
 
+  def list_groups(token) do
+    post_method(:groups, %{token: token})
+  end
+
   def _post(method, %{token: _} = query) do
     {:ok, json} = post("#{method}?#{URI.encode_query(query)}")
     json

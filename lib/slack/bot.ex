@@ -24,37 +24,60 @@ defmodule Slack.Bot do
 
   alias Slack.Bot.Config
 
-  def start_link(name, config) do
-    GenServer.start_link(__MODULE__, config, name: name)
+  @spec start_link(atom, %Config{}, map()) :: GenServer.on_start()
+  def start_link(name, config, channel_map) do
+    GenServer.start_link(__MODULE__, {name, config, channel_map}, name: name)
   end
 
+  @spec ping!(atom) :: :ok
   def ping!(name), do: send_payload(name, %{type: "ping"})
 
+  @spec say(atom, String.t | nil, String.t | nil) :: :ok
   def say(name, text, channel \\ nil)
 
-  def say(_, nil, _), do: nil
+  def say(_, nil, _), do: :ok
 
   def say(name, text, channel) do
     send_payload(name, %{type: "message", text: text, channel: channel || default_channel()})
   end
 
+  # for api
+  def say_to_named_channel(name, text, channel_name) do
+    case get_channel_id(name, channel_name) do
+      :error -> :error
+      id -> say(name, text, id)
+    end
+  end
+
+  defp get_channel_id(name, channel_name) do
+    Agent.get(:"#{name}:channels", fn map ->
+      map
+      |> Map.get(channel_name, %{})
+      |> Map.get("id", :error)
+    end)
+  end
+
   # ---
 
   @impl true
-  def init(%Config{} = config) do
+  @spec init({atom, %Config{}, map()}) :: {:ok, %Config{}}
+  def init({name, %Config{} = config, %{} = channel_map}) do
+    Agent.start_link(fn -> channel_map end, name: :"#{name}:channels")
     {:ok, config}
   end
 
   @impl true
+  @spec init(%{}) :: {:ok, %Config{}}
   def init(%{} = config) do
     {:ok, Map.merge(%Config{}, config)}
   end
 
-  # TODO
+  @spec default_channel() :: binary()
   defp default_channel do
     Slack.default_channel
   end
 
+  @spec handle_cast(:ping | {:event, map()} | {:mod_config, map()}, %Config{}) :: {:noreply, %Config{}}
   @impl true
   def handle_cast(:ping, config) do
     ping!(config.name)
@@ -73,6 +96,7 @@ defmodule Slack.Bot do
   end
 
   # append new message id to payloads with none
+  @spec send_payload(atom, map()) :: :ok
   defp send_payload(name, payload) do
     {:ok, id} = GenServer.call(:"#{name}:message_tracker", {:push, payload})
     GenServer.cast(:"#{name}:outbox", {:push, Map.put(payload, :id, id)})
