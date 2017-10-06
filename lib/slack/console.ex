@@ -151,9 +151,12 @@ defmodule Slack.Console.APIClient do
 
   @impl true
   def auth_request(token, internal_name) do
-    %{"self" => %{"id" => token}, "url" => "user/#{internal_name}"}
+    %{"self" => %{"id" => token}, "channels" => [], "url" => "user/#{internal_name}"}
   end
 
   @impl true
   def join_channel(_, _), do: %{}
+
+  def list_channels(_), do: %{"channels" => []}
+  def list_groups(_), do: %{"groups" => []}
 end

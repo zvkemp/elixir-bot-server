@@ -2,15 +2,16 @@ defmodule SlackTestClient do
   use Slack.Behaviours.API
 
   def auth_request(token, _internal_name) do
-    %{
-       "url" => "ws://test.host/#{token}",
-       "self" => %{ "id" => "ID#{token}" }
-     }
+    %{"url" => "ws://test.host/#{token}",
+      "self" => %{"id" => "ID#{token}"},
+      "channels" => []}
   end
 
   def join_channel(channel_name, token) do
     %{}
   end
+
+  def list_groups(_), do: %{"groups" => []}
 end
 
 # See Bot Integration Tests

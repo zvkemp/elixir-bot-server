@@ -14,7 +14,7 @@ defmodule Slack.Bot.Supervisor do
     } = response = c.api_client.auth_request(c.token, c.name)
 
     channels = response["channels"] |> Enum.filter&(&1["is_member"])
-    private_channels = c.api_client.list_groups(c.token) |> Map.get("groups", [])
+    private_channels = c.token |> c.api_client.list_groups |> Map.get("groups", [])
 
     channels_by_name = Enum.reduce(channels ++ private_channels, %{}, fn (%{"name" => name} = c, acc) -> Map.put(acc, name, c) end)
 
