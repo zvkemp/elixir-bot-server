@@ -7,6 +7,8 @@ defmodule Slack.Bot do
   use GenServer
   require Logger
 
+  import Slack.BotRegistry
+
   defmodule Config do
     defstruct [
       id: nil, # Usually set by the result of an API call
@@ -97,15 +99,15 @@ defmodule Slack.Bot do
   # append new message id to payloads with none
   @spec send_payload(atom, map()) :: :ok
   defp send_payload(name, payload) do
-    {:ok, id} = GenServer.call(:"#{name}:message_tracker", {:push, payload})
-    GenServer.cast(:"#{name}:outbox", {:push, Map.put(payload, :id, id)})
+    {:ok, id} = GenServer.call(registry_key(name, :message_tracker), {:push, payload})
+    GenServer.cast(registry_key(name, :outbox), {:push, Map.put(payload, :id, id)})
   end
 
   # NOTE: removed the "ok" => true matcher (not included in pongs).
   # May want to re-add it at some point.
   defp process_receipt(name, %{"reply_to" => id} = msg, _config) do
     # IO.inspect({:receipt, msg})
-    GenServer.call(:"#{name}:message_tracker", {:reply, id, msg})
+    GenServer.call(registry_key(name, :message_tracker), {:reply, id, msg})
   end
 
   defp process_receipt(name, %{"type" => "message"} = msg, config) do

@@ -1,10 +1,6 @@
 defmodule Slack.Bot.Outbox do
   use GenServer
 
-  def start_link(name, socket_name, nil) do
-    start_link(name, socket_name)
-  end
-
   def start_link(name, socket_name, rate_limit \\ 1000) do
     GenServer.start_link(__MODULE__, {:ok, socket_name, rate_limit}, name: name)
   end
