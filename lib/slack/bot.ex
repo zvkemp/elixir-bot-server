@@ -24,9 +24,9 @@ defmodule Slack.Bot do
 
   alias Slack.Bot.Config
 
-  @spec start_link(atom, %Config{}, map()) :: GenServer.on_start()
-  def start_link(name, config, channel_map) do
-    GenServer.start_link(__MODULE__, {name, config, channel_map}, name: name)
+  @spec start_link(atom, %Config{}) :: GenServer.on_start()
+  def start_link(name, config) do
+    GenServer.start_link(__MODULE__, config, name: name)
   end
 
   @spec ping!(atom) :: :ok
@@ -61,8 +61,7 @@ defmodule Slack.Bot do
 
   @impl true
   @spec init({atom, %Config{}, map()}) :: {:ok, %Config{}}
-  def init({name, %Config{} = config, %{} = channel_map}) do
-    Agent.start_link(fn -> channel_map end, name: :"#{name}:channels")
+  def init(%Config{} = config) do
     {:ok, config}
   end
 

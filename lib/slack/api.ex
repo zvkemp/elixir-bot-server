@@ -1,6 +1,5 @@
 defmodule Slack.API do
-  # @behaviour Slack.Behaviours.API
-  use Slack.Behaviours.API
+  @behaviour Slack.Behaviours.API
 
   @api_root "https://slack.com/api"
   @methods %{auth:         "rtm.start",

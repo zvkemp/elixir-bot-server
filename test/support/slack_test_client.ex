@@ -1,5 +1,7 @@
 defmodule SlackTestClient do
-  use Slack.Behaviours.API
+  # NOTE: This has more or less been replaced by Slack.Console.APIClient
+  @moduledoc false
+  @behaviour Slack.Behaviours.API
 
   def auth_request(token, _internal_name) do
     %{"url" => "ws://test.host/#{token}",
