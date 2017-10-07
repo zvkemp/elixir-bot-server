@@ -22,8 +22,12 @@ defmodule Slack.Console.PubSub do
     GenServer.call(__MODULE__, {:subscribe, channel, socket, user_key})
   end
 
+  def message({channel, message}) do
+    broadcast(channel, %{"text" => message, "channel" => channel, "type" => "message"}, nil)
+  end
+
   def message(message) do
-    broadcast("console", %{"text" => message, "channel" => "console", "type" => "message"}, nil)
+    message({"console", message})
   end
 
   def broadcast(message, socket) when is_pid(socket) do

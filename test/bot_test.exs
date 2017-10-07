@@ -38,7 +38,7 @@ defmodule Slack.BotTest.Integration do
   end
 
   test "say with default channel", %{config: %{ name: name, token: _token }} do
-    channel = "CHANNEL"
+    channel = "console"
     message = "hey there"
     Slack.Bot.say(name, message, channel)
 
@@ -46,7 +46,7 @@ defmodule Slack.BotTest.Integration do
     assert %{
       "type"    => "message",
       "text"    => ^message,
-      "channel" => _channel,
+      "channel" => ^channel,
       "id"      => msg_id
     } = Poison.decode!(json_content)
     # tracks the message

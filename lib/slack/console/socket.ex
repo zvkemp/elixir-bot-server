@@ -43,6 +43,11 @@ defmodule Slack.Console.Socket do
   end
 
   # outgoing
+  defp handle_payload(%{"channel" => channel, "type" => "message"} = msg, socket) do
+    Slack.Console.PubSub.broadcast(channel, msg, socket)
+  end
+
+  # outgoing
   defp handle_payload(%{"type" => "message"} = msg, socket) do
     Slack.Console.PubSub.broadcast(msg, socket)
   end

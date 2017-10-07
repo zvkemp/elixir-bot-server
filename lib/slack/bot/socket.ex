@@ -25,6 +25,10 @@ defmodule Slack.Bot.Socket do
     {:reply, outcome, {socket, client}}
   end
 
+  def handle_call(:socket_pid, _from, {socket, _} = s) do
+    {:reply, socket, s}
+  end
+
   # SOCKET MANAGEMENT
 
   defp connect(ws_url, client, bot_name) do
