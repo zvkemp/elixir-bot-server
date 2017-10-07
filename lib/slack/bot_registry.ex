@@ -12,4 +12,8 @@ defmodule Slack.BotRegistry do
   def key_for_role({:via, Registry, {__MODULE__, {name, _}}}, role) do
     registry_key(name, role)
   end
+
+  def lookup(key) do
+    Registry.lookup(__MODULE__, key) |> List.first
+  end
 end
