@@ -8,6 +8,7 @@ defmodule Slack.Bot do
   require Logger
 
   import Slack.BotRegistry
+  alias Slack.Bot.{Outbox, MessageTracker}
 
   defmodule Config do
     defstruct [
@@ -28,7 +29,7 @@ defmodule Slack.Bot do
 
   @spec start_link(atom, %Config{}) :: GenServer.on_start()
   def start_link(name, config) do
-    GenServer.start_link(__MODULE__, config, name: name)
+    GenServer.start_link(__MODULE__, config, name: registry_key(name, __MODULE__))
   end
 
   @spec ping!(atom) :: :ok
@@ -99,15 +100,15 @@ defmodule Slack.Bot do
   # append new message id to payloads with none
   @spec send_payload(atom, map()) :: :ok
   defp send_payload(name, payload) do
-    {:ok, id} = GenServer.call(registry_key(name, :message_tracker), {:push, payload})
-    GenServer.cast(registry_key(name, :outbox), {:push, Map.put(payload, :id, id)})
+    {:ok, id} = GenServer.call(registry_key(name, MessageTracker), {:push, payload})
+    GenServer.cast(registry_key(name, Outbox), {:push, Map.put(payload, :id, id)})
   end
 
   # NOTE: removed the "ok" => true matcher (not included in pongs).
   # May want to re-add it at some point.
   defp process_receipt(name, %{"reply_to" => id} = msg, _config) do
     # IO.inspect({:receipt, msg})
-    GenServer.call(registry_key(name, :message_tracker), {:reply, id, msg})
+    GenServer.call(registry_key(name, MessageTracker), {:reply, id, msg})
   end
 
   defp process_receipt(name, %{"type" => "message"} = msg, config) do

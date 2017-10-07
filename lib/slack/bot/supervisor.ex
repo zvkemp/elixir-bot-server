@@ -1,6 +1,7 @@
 defmodule Slack.Bot.Supervisor do
   use Supervisor
   import Slack.BotRegistry
+  alias Slack.Bot
 
   def start_link(%{name: name} = config) do
     Supervisor.start_link(__MODULE__, config, name: "#{name}:supervisor" |> String.to_atom)
@@ -13,10 +14,10 @@ defmodule Slack.Bot.Supervisor do
     Agent.start_link(fn -> channels end, name: :"#{c.name}:channels")
 
     children = [
-      worker(Slack.Bot,                    [registry_key(c.name, :bot), Map.put(c, :id, uid)]),
-      worker(Slack.Bot.Socket,             [registry_key(c.name, :socket), ws_url, c.socket_client, registry_key(c.name, :bot)]),
-      worker(Slack.Bot.MessageTracker,     [registry_key(c.name, :message_tracker), registry_key(c.name, :bot), c.ping_frequency || 10_000]),
-      worker(Slack.Bot.Outbox,             [registry_key(c.name, :outbox), registry_key(c.name, :socket), c.rate_limit])
+      worker(Bot,                [c.name, Map.put(c, :id, uid)]),
+      worker(Bot.Socket,         [c.name, ws_url, c.socket_client]),
+      worker(Bot.MessageTracker, [c.name, c.ping_frequency || 10_000]),
+      worker(Bot.Outbox,         [c.name, c.rate_limit])
     ]
 
     supervise(children, strategy: :rest_for_one)

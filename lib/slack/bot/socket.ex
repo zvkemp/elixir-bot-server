@@ -3,13 +3,14 @@ defmodule Slack.Bot.Socket do
   Simple server wrapper around a websocket
   """
 
-  alias Slack.Bot.Receiver
+  alias Slack.Bot.{Receiver}
+  import Slack.BotRegistry
 
-  # TODO: Make this die on Websocket disconnects / errors
+  # TODO: Make this die on Websocket disconnects / errors (or handle "type" => "reconnect_url" messages)
   use GenServer
 
-  def start_link(name, ws_url, client, bot_name) do
-    GenServer.start_link(__MODULE__, {:ok, ws_url, client, bot_name}, name: name)
+  def start_link(name, ws_url, client) do
+    GenServer.start_link(__MODULE__, {:ok, ws_url, client, name}, name: registry_key(name, __MODULE__))
   end
 
   # CALLBACKS
