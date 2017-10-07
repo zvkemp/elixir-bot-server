@@ -53,7 +53,7 @@ defmodule Slack.Bot do
   end
 
   defp get_channel_id(name, channel_name) do
-    Agent.get(:"#{name}:channels", fn map ->
+    Agent.get(registry_key(name, :channels), fn map ->
       map
       |> Map.get(channel_name, %{})
       |> Map.get("id", :error)

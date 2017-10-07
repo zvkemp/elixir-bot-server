@@ -4,14 +4,14 @@ defmodule Slack.Bot.Supervisor do
   alias Slack.Bot
 
   def start_link(%{name: name} = config) do
-    Supervisor.start_link(__MODULE__, config, name: "#{name}:supervisor" |> String.to_atom)
+    Supervisor.start_link(__MODULE__, config, name: registry_key(name, __MODULE__))
   end
 
   # ---
 
   def init(%Slack.Bot.Config{} = c) do
     {uid, ws_url, channels} = init_api_calls(c.api_client, c.token, c.name)
-    Agent.start_link(fn -> channels end, name: :"#{c.name}:channels")
+    Agent.start_link(fn -> channels end, name: registry_key(c.name, :channels))
 
     children = [
       worker(Bot,                [c.name, Map.put(c, :id, uid)]),
