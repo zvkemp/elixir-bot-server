@@ -33,7 +33,7 @@ defmodule Slack.Bot do
   def ping!(name), do: send_payload(name, %{type: "ping"})
 
   @spec say(atom, String.t | nil, String.t | nil) :: :ok
-  def say(name, text, channel \\ nil)
+  def say(name, text, _channel \\ nil)
 
   def say(_, nil, _), do: :ok
 

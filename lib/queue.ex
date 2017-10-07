@@ -63,4 +63,11 @@ defmodule Queue do
   defp wait_for_value({pid, ref} = from, {state, waiters}) do
     {:reply, {:wait, ref}, {state, :queue.in(from, waiters)}}
   end
+
+  # NOTE: adding this as an additional push mechanism to support sending messages to
+  # generic process in Slack.Console.PubSub (facilitates assert_receive tests)
+  def handle_info({:push, val}, state) do
+    {:reply, :ok, new_state} = handle_call({:push, val}, nil, state)
+    {:noreply, new_state}
+  end
 end

@@ -64,14 +64,11 @@ defmodule Slack.Console.PubSub do
   def handle_cast({:broadcast, channel, unencoded_message, from_socket}, channels) do
     uid     = channels[channel][from_socket] || "console user"
     message = unencoded_message |> Map.put("user", uid) |> Poison.encode!
+    text    = unencoded_message["text"]
 
-    [:red, "[#{channel}]", :yellow, "[#{uid}] ", :green, unencoded_message["text"]]
-    |> IO.ANSI.format
-    |> IO.chardata_to_string
-    |> IO.puts
+    Slack.Console.Printer.print(channel, uid, text)
 
     # Logger.debug("[#{channel}] :: #{message} #{inspect(uid)}")
-
     # don't deliver to sending socket
     queues = channels |> Map.get(channel, %{})
                       |> Map.keys
@@ -79,7 +76,7 @@ defmodule Slack.Console.PubSub do
                         ^from_socket -> false
                         _ -> true
                       end)
-    Task.start(fn -> Enum.each(queues, fn q -> Queue.push(q, message) end) end)
+    Task.start(fn -> Enum.each(queues, fn q -> send(q, {:push, message}) end) end)
     send_receipt(unencoded_message, from_socket)
     {:noreply, channels}
   end
@@ -136,8 +133,9 @@ defmodule Slack.Console.Socket do
   end
 
   # outgoing, but simulate pong response immediately
-  defp handle_payload(%{"type" => "ping", "id" => id}, socket) do
+  defp handle_payload(%{"type" => "ping", "id" => id} = msg, socket) do
     Queue.push(socket, %{"reply_to" => id, "type" => "pong"} |> Poison.encode!)
+    Slack.Console.PubSub.broadcast("__pings__", msg, socket)
   end
 
   # outgoing
@@ -146,8 +144,21 @@ defmodule Slack.Console.Socket do
   end
 end
 
+defmodule Slack.Console.Printer do
+  use GenServer
+
+  def print(channel, uid, nil), do: :ok
+  def print(channel, uid, text) do
+    if Application.get_env(:slack, :print_to_console), do:
+      [:red, "[#{channel}]", :yellow, "[#{uid}] ", :green, text]
+      |> IO.ANSI.format
+      |> IO.chardata_to_string
+      |> IO.puts
+  end
+end
+
 defmodule Slack.Console.APIClient do
-  use Slack.Behaviours.API
+  @behaviour Slack.Behaviours.API
 
   @impl true
   def auth_request(token, internal_name) do
@@ -157,6 +168,8 @@ defmodule Slack.Console.APIClient do
   @impl true
   def join_channel(_, _), do: %{}
 
+  @impl true
   def list_channels(_), do: %{"channels" => []}
+  @impl true
   def list_groups(_), do: %{"groups" => []}
 end

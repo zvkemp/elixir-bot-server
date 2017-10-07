@@ -6,8 +6,8 @@ defmodule Slack.BotTest.Integration do
     config = %Slack.Bot.Config{
       name: name,
       token: token,
-      api_client: SlackTestClient,
-      socket_client: SocketTestClient,
+      api_client: Slack.Console.APIClient,
+      socket_client: Slack.Console.Socket,
       ping_frequency: 100,
       rate_limit: 0
     }
@@ -16,27 +16,30 @@ defmodule Slack.BotTest.Integration do
     {:ok, %{config: config}}
   end
 
-  setup %{config: %{token: token}} = context do
-    SocketTestClient.register_test_receiver(self, token)
+  setup %{config: %{token: _token}} = context do
+    # SocketTestClient.register_test_receiver(self(), token)
+    Slack.Console.PubSub.subscribe("console", self(), "exunit")
+    Slack.Console.PubSub.subscribe("__pings__", self(), "exunit")
     {:ok, context}
   end
 
-  test "automatic pings", %{config: %{name: name, token: token}} do
-    assert_receive({:test_payload, ^token, data}, 200)
-    assert %{ "type" => "ping" } = data
+  test "automatic pings", %{config: %{name: _name, token: _token}} do
+    assert_receive({:push, data}, 200)
+    assert %{"type" => "ping"} = Poison.decode!(data)
   end
 
-  test "say with default channel", %{config: %{ name: name, token: token }} do
+  test "say with default channel", %{config: %{ name: name, token: _token }} do
     channel = "CHANNEL"
     message = "hey there"
     Slack.Bot.say(name, message, channel)
-    assert_receive({:test_payload, ^token, %{
-      "type"    => "message",
-      "text"    => message,
-      "channel" => channel,
-      "id"      => msg_id
-    }})
 
+    assert_receive({:push, json_content})
+    assert %{
+      "type"    => "message",
+      "text"    => ^message,
+      "channel" => _channel,
+      "id"      => msg_id
+    } = Poison.decode!(json_content)
     # tracks the message
     state = GenServer.call(:"#{name}:message_tracker", :current)
     assert message == state.messages[msg_id][:text]
