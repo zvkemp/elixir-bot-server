@@ -12,7 +12,7 @@ defmodule Slack.Responders.Default do
 
   import Slack.Bot, only: [say: 3]
 
-  defp try_echo(name, %{"text" => t, "user" => user, "channel" => c}, %Config{} = config) do
+  defp try_echo(name, %{"text" => t, "user" => _user, "channel" => c}, %Config{} = config) do
     mention = "<@#{config.id}>"
     if String.starts_with?(t, "#{name} echo ") || String.starts_with?(t, "#{mention} echo ") do
       say(name, t |> String.split(" echo ", parts: 2) |> Enum.at(1), c)

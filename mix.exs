@@ -3,11 +3,12 @@ defmodule Slack.Mixfile do
 
   def project do
     [app: :slack,
-     version: "0.3.0",
+     version: "0.4.0",
      elixir: "~> 1.5",
      elixirc_paths: elixirc_paths(Mix.env),
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
+     dialyzer: [plt_add_apps: [:poison], flags: [:unmatched_returns, :error_handling, :race_conditions, :underspecs]],
      deps: deps()]
   end
 
@@ -36,7 +37,7 @@ defmodule Slack.Mixfile do
   defp deps do
     [
       {:httpotion, "~> 3.0.0"},
-      {:socket, github: "zvkemp/elixir-socket"},
+      {:socket, "~> 0.3.12"},
       {:poison, "~> 2.0"},
       {:mix_test_watch, "~> 0.2", only: :dev},
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false},

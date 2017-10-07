@@ -1,6 +1,6 @@
 defmodule Queue do
   @moduledoc """
-  Documentation for Queue.
+  blocking FIFO queue agent (wrapper around erlang's :queue
   """
 
   use GenServer
@@ -9,6 +9,7 @@ defmodule Queue do
     GenServer.start_link(__MODULE__, [], opts)
   end
 
+  @impl true
   def init(_arg) do
     {:ok, {:queue.new(), :queue.new()}}
   end
@@ -34,25 +35,32 @@ defmodule Queue do
     GenServer.call(q, {:unregister_waiter, ref})
   end
 
+  @impl true
   def handle_call({:unregister_waiter, ref}, {pid, _}, {queue, waiters}) do
     # Filters on original call ref and same pid
-    new_waiters = :queue.filter(fn {^pid, ^ref} -> false; _ -> true end, waiters)
+    new_waiters = :queue.filter(fn
+      {^pid, ^ref} -> false
+      _ -> true end,
+      waiters)
     {:reply, :ok, {queue, new_waiters}}
   end
 
   # Push, no one is waiting
-  def handle_call({:push, val}, from, {state, {[], []} = waiters}) do
+  @impl true
+  def handle_call({:push, val}, _from, {state, {[], []} = waiters}) do
     new_state = :queue.in(val, state)
     {:reply, :ok, {new_state, waiters}}
   end
 
   # Push, and notify first waiter
+  @impl true
   def handle_call({:push, val}, _from, {state, waiters}) do
     {{:value, {pid, ref}}, new_waiters} = :queue.out(waiters)
     Process.send(pid, {ref, val}, [])
     {:reply, :ok, {state, new_waiters}}
   end
 
+  @impl true
   def handle_call(:pop, from, {state, waiters}) do
     case :queue.out(state) do
       {{:value, val}, new_state} -> {:reply, {:ok, val}, {new_state, waiters}}
@@ -60,7 +68,15 @@ defmodule Queue do
     end
   end
 
-  defp wait_for_value({pid, ref} = from, {state, waiters}) do
+  defp wait_for_value({_pid, ref} = from, {state, waiters}) do
     {:reply, {:wait, ref}, {state, :queue.in(from, waiters)}}
+  end
+
+  # NOTE: adding this as an additional push mechanism to support sending messages to
+  # generic process in Slack.Console.PubSub (facilitates assert_receive tests)
+  @impl true
+  def handle_info({:push, val}, state) do
+    {:reply, :ok, new_state} = handle_call({:push, val}, nil, state)
+    {:noreply, new_state}
   end
 end

@@ -1,6 +1,5 @@
 defmodule Slack.API do
-  # @behaviour Slack.Behaviours.API
-  use Slack.Behaviours.API
+  @behaviour Slack.Behaviours.API
 
   @api_root "https://slack.com/api"
   @methods %{auth:         "rtm.start",
@@ -24,6 +23,10 @@ defmodule Slack.API do
 
   def list_channels(token) do
     post_method(:channels, %{token: token})
+  end
+
+  def list_groups(token) do
+    post_method(:groups, %{token: token})
   end
 
   def _post(method, %{token: _} = query) do

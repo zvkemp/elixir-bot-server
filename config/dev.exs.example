@@ -1,6 +1,8 @@
 use Mix.Config
 
 config :slack,
+  use_console: true, # simulate a local slack instance
+  print_to_console: true, # print console messages to the local tty (disabled in test)
   default_channel: "CHANNELID",
   bots: [
     %{ name:    "bot_a",

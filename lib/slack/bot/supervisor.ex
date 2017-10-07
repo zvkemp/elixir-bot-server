@@ -8,10 +8,8 @@ defmodule Slack.Bot.Supervisor do
   # ---
 
   def init(%Slack.Bot.Config{} = c) do
-    %{
-      "self" => %{"id" => uid},
-      "url"  => ws_url
-    } = c.api_client.auth_request(c.token, c.name)
+    {uid, ws_url, channels} = init_api_calls(c.api_client, c.token, c.name)
+    Agent.start_link(fn -> channels end, name: :"#{c.name}:channels")
 
     children = [
       worker(Slack.Bot,                    [:"#{c.name}:bot", Map.put(c, :id, uid)]),
@@ -21,5 +19,23 @@ defmodule Slack.Bot.Supervisor do
     ]
 
     supervise(children, strategy: :rest_for_one)
+  end
+
+  defp init_api_calls(client, token, name) do
+    %{
+      "self" => %{"id" => uid},
+      "url"  => ws_url
+    } = response = client.auth_request(token, name)
+
+    channels = response["channels"] |> Enum.filter(&(&1["is_member"]))
+    private_channels = token |> client.list_groups |> Map.get("groups", [])
+
+    channels_by_name = Enum.reduce(
+      channels ++ private_channels,
+      %{},
+      fn (%{"name" => name} = c, acc) -> Map.put(acc, name, c) end
+    )
+
+    {uid, ws_url, channels_by_name}
   end
 end
