@@ -19,7 +19,8 @@ defmodule Slack.Supervisor do
 
   def init(_arg) do
     children = [
-      supervisor(Slack.BotRegistry, [bot_configs()])
+      supervisor(Registry, [[keys: :unique, name: Slack.BotRegistry]]),
+      supervisor(Slack.BotDepot, [bot_configs()])
     ]
 
     children = if use_console?() do
