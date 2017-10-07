@@ -1,6 +1,7 @@
 /_build
 /cover
 /deps
+/doc
 /config/prod.exs
 /config/dev.exs
 erl_crash.dump

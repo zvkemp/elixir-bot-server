@@ -27,8 +27,14 @@ defmodule Slack.BotTest.Integration do
   end
 
   test "automatic pings", %{config: %{name: _name, token: _token}} do
-    assert_receive({:push, data}, 200)
+    assert_receive({:push, data}, 120)
     assert %{"type" => "ping"} = Poison.decode!(data)
+  end
+
+  test "manual pings", %{config: %{name: name}} do
+    Slack.Bot.ping!(name)
+    assert_receive({:push, data}, 25) # first automatic ping would not have been received yet
+    assert_receive({:push, _}, 120) # automatic ping
   end
 
   test "say with default channel", %{config: %{ name: name, token: _token }} do

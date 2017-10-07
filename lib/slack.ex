@@ -18,10 +18,12 @@ defmodule Slack.Supervisor do
   end
 
   def init(_arg) do
-    children = [
-      supervisor(Registry, [[keys: :unique, name: Slack.BotRegistry]]),
-      supervisor(Slack.BotDepot, [bot_configs()])
-    ]
+    registry_spec = supervisor(Registry, [[keys: :unique, name: Slack.BotRegistry]])
+    bot_specs     = bot_configs() |> Enum.map(fn (%{name: name} = config) ->
+      supervisor(Slack.Bot.Supervisor, [config], id: {name, __MODULE__})
+    end)
+
+    children = [registry_spec | bot_specs]
 
     children = if use_console?() do
       [supervisor(Slack.Console, [])|children]

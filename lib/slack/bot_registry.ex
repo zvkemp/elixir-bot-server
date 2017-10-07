@@ -13,23 +13,3 @@ defmodule Slack.BotRegistry do
     registry_key(name, role)
   end
 end
-
-defmodule Slack.BotDepot do
-  @moduledoc """
-  Starts a supervisor for each bot in configs
-  """
-
-  use Supervisor
-
-  def start_link(configs) do
-    Supervisor.start_link(__MODULE__, configs, name: __MODULE__)
-  end
-
-  def init(configs) do
-    children = configs |> Enum.map(fn (%{name: name} = config) ->
-      supervisor(Slack.Bot.Supervisor, [config], id: :"registered:#{name}")
-    end)
-
-    supervise(children, strategy: :one_for_one)
-  end
-end

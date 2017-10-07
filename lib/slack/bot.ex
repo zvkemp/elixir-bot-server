@@ -8,6 +8,7 @@ defmodule Slack.Bot do
   require Logger
 
   import Slack.BotRegistry
+  import Slack, only: [default_channel: 0]
   alias Slack.Bot.{Outbox, MessageTracker}
 
   defmodule Config do
@@ -32,19 +33,40 @@ defmodule Slack.Bot do
     GenServer.start_link(__MODULE__, config, name: registry_key(name, __MODULE__))
   end
 
-  @spec ping!(atom) :: :ok
+  @doc """
+  Manually trigger a ping.
+
+  ## Examples
+
+      iex> Slack.Bot.ping!("frogbot")
+      :ok
+
+  """
+  @spec ping!(binary) :: :ok
   def ping!(name), do: send_payload(name, %{type: "ping"})
 
-  @spec say(atom, String.t | nil, String.t | nil) :: :ok
+  @doc """
+  Enqueue a message from the given bot to the given channel.
+
+  ## Examples
+
+     Slack.Bot.say("frogbot", nil) #=> :ok # (nothing happens)
+     Slack.Bot.say("frogbot", "Hello, world") #=> :ok (message sent to default channel)
+     Slack.Bot.say("frogbot", "Hello, world", "ABCDEF123") #=> :ok (message sent to channel given by channel id)
+
+  """
+  @spec say(binary, binary | nil, binary | nil) :: :ok
   def say(name, text, _channel \\ nil)
 
   def say(_, nil, _), do: :ok
 
-  def say(name, text, channel) do
-    send_payload(name, %{type: "message", text: text, channel: channel || default_channel()})
+  def say(name, text, channel_id) do
+    send_payload(name, %{type: "message", text: text, channel: channel_id || default_channel()})
   end
 
-  # for api
+  @doc """
+  Attempts to look up a channel id by name, then sends the given message to it.
+  """
   def say_to_named_channel(name, text, channel_name) do
     case get_channel_id(name, channel_name) do
       :error -> :error
@@ -72,11 +94,6 @@ defmodule Slack.Bot do
   @spec init(%{}) :: {:ok, %Config{}}
   def init(%{} = config) do
     {:ok, Map.merge(%Config{}, config)}
-  end
-
-  @spec default_channel() :: binary()
-  defp default_channel do
-    Slack.default_channel
   end
 
   @spec handle_cast(:ping | {:event, map()} | {:mod_config, map()}, %Config{}) :: {:noreply, %Config{}}

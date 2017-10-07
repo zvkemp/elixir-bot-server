@@ -41,7 +41,8 @@ defmodule Slack.Mixfile do
       {:poison, "~> 2.0"},
       {:mix_test_watch, "~> 0.2", only: :dev},
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
-      {:credo, "~> 0.8", only: [:dev, :test]}
+      {:credo, "~> 0.8", only: [:dev, :test]},
+      {:ex_doc, "~> 0.16", only: :dev, runtime: false}
     ]
   end
 end
