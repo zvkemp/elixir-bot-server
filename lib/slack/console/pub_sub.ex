@@ -60,9 +60,10 @@ defmodule Slack.Console.PubSub do
   @impl true
   @spec handle_cast({:broadcast, String.t, String.t, map, pid}, {map, map}) :: {:noreply, {map, map}}
   def handle_cast({:broadcast, workspace, channel, unencoded_message, from_socket} = m, {channels, _} = state) do
+    ts = System.os_time(:microseconds) / 10_000_00
     channel_key = {workspace, channel}
     uid     = channels[channel_key][from_socket] || "console user"
-    message = unencoded_message |> Map.put("user", uid) |> Poison.encode!
+    message = unencoded_message |> Map.merge(%{"user" => uid, "ts" => "#{ts}"}) |> Poison.encode!
     text    = unencoded_message["text"]
 
     Slack.Console.print(workspace, channel, uid, text)

@@ -3,15 +3,14 @@ defmodule Slack.Bot.Supervisor do
   import Slack.BotRegistry
   alias Slack.Bot
 
-  def start_link(%{name: name, workspace: ws} = config) do
-    Supervisor.start_link(__MODULE__, config, name: registry_key({ws, name}, __MODULE__))
+  def start_link(%{name: bot} = config, data) do
+    Supervisor.start_link(__MODULE__, {config, data}, name: registry_key(bot, __MODULE__))
   end
 
   # ---
 
-  def init(%Slack.Bot.Config{} = c) do
-    name = {c.workspace, c.name}
-    {uid, ws_url, channels} = init_api_calls(c.api_client, c.token, name)
+  def init({%Slack.Bot.Config{} = c, {uid, ws_url, channels}}) do
+    name = c.name
     Agent.start_link(fn -> channels end, name: registry_key(name, :channels))
 
     children = [
@@ -24,7 +23,7 @@ defmodule Slack.Bot.Supervisor do
     supervise(children, strategy: :rest_for_one)
   end
 
-  defp init_api_calls(client, token, name) do
+  def init_api_calls(client, token, name) do
     %{
       "self" => %{"id" => uid},
       "url"  => ws_url
