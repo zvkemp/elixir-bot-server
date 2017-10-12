@@ -19,8 +19,11 @@ defmodule Slack.Supervisor do
 
   def init(_arg) do
     registry_spec = supervisor(Registry, [[keys: :unique, name: Slack.BotRegistry]])
-    bot_specs     = bot_configs() |> Enum.map(fn (%{name: name, workspace: ws} = config) ->
-      supervisor(Slack.Bot.Supervisor, [config], id: {{ws, name}, Slack.Bot.Supervisor})
+
+    bot_specs = bot_configs()
+    |> Task.async_stream(&bot_config_to_spec/1)
+    |> Enum.map(fn ({:ok, {%{name: bot} = config, data}}) ->
+      supervisor(Slack.Bot.Supervisor, [config, data], id: {bot, Slack.Bot.Supervisor})
     end)
 
     children = [registry_spec | bot_specs]
@@ -38,14 +41,9 @@ defmodule Slack.Supervisor do
     Application.get_env(:slack, :use_console, false)
   end
 
-  # def start_bot(name) when is_binary(name) or is_atom(name) do
-  #   config = bot_configs() |> Enum.find(fn (%{name: n}) -> n == name end)
-  #   start_bot(config)
-  # end
-
-  # TODO: use normal supervisor handler
   def start_bot(%{} = config) do
-    Slack.Bot.Supervisor.start_link(config)
+    {config, data} = bot_config_to_spec(config)
+    Slack.Bot.Supervisor.start_link(config, data)
   end
 
   def stop_bot(name) do
@@ -56,5 +54,11 @@ defmodule Slack.Supervisor do
     :slack
     |> Application.get_env(:bots, [])
     |> Enum.map(&struct(Slack.Bot.Config, &1))
+  end
+
+  defp bot_config_to_spec(conf) do
+    bot_name = {conf.workspace, conf.name}
+    api_data = Slack.Bot.Supervisor.init_api_calls(conf.api_client, conf.token, bot_name)
+    {Map.put(conf, :name, bot_name), api_data}
   end
 end
