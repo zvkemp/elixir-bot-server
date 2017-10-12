@@ -17,12 +17,13 @@ defmodule Slack.Bot.MessageTracker do
 
   @ping_ms 10_000
 
+  @spec start_link(Slack.Bot.bot_name, integer) :: GenServer.on_start
   def start_link(name, ping_freq \\ @ping_ms) do
     GenServer.start_link(__MODULE__, {name, ping_freq}, name: registry_key(name, __MODULE__))
   end
 
   @impl true
-  @spec init({binary, integer}) :: {:ok, %S{}}
+  @spec init({Slack.Bot.bot_name, integer}) :: {:ok, %S{}}
   def init({name, ping_freq}) do
     {:ok, %S{ping_ref: reset_ping_timer(ping_freq), name: name, ping_freq: ping_freq}}
   end
@@ -35,7 +36,7 @@ defmodule Slack.Bot.MessageTracker do
 
   @spec reset_ping_timer(integer(), :timer.tref() | nil) :: :timer.tref()
   defp reset_ping_timer(ms, ping_ref \\ nil) do
-    if ping_ref, do: :timer.cancel(ping_ref)
+    if ping_ref, do: _ = :timer.cancel(ping_ref)
     {:ok, new_ping_ref} = :timer.send_after(ms, :ping)
     new_ping_ref
   end
