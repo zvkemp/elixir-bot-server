@@ -3,21 +3,22 @@ defmodule Slack.Bot.Supervisor do
   import Slack.BotRegistry
   alias Slack.Bot
 
-  def start_link(%{name: name} = config) do
-    Supervisor.start_link(__MODULE__, config, name: registry_key(name, __MODULE__))
+  def start_link(%{name: name, workspace: ws} = config) do
+    Supervisor.start_link(__MODULE__, config, name: registry_key({ws, name}, __MODULE__))
   end
 
   # ---
 
   def init(%Slack.Bot.Config{} = c) do
-    {uid, ws_url, channels} = init_api_calls(c.api_client, c.token, c.name)
-    Agent.start_link(fn -> channels end, name: registry_key(c.name, :channels))
+    name = {c.workspace, c.name}
+    {uid, ws_url, channels} = init_api_calls(c.api_client, c.token, name)
+    Agent.start_link(fn -> channels end, name: registry_key(name, :channels))
 
     children = [
-      worker(Bot,                [c.name, Map.put(c, :id, uid)]),
-      worker(Bot.Socket,         [c.name, ws_url, c.socket_client]),
-      worker(Bot.MessageTracker, [c.name, c.ping_frequency || 10_000]),
-      worker(Bot.Outbox,         [c.name, c.rate_limit])
+      worker(Bot,                [name, Map.merge(c, %{id: uid, name: name})]),
+      worker(Bot.Socket,         [name, ws_url, c.socket_client]),
+      worker(Bot.MessageTracker, [name, c.ping_frequency || 10_000]),
+      worker(Bot.Outbox,         [name, c.rate_limit])
     ]
 
     supervise(children, strategy: :rest_for_one)

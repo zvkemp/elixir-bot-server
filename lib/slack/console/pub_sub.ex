@@ -15,54 +15,67 @@ defmodule Slack.Console.PubSub do
 
   @impl true
   def init(:ok) do
-    {:ok, %{}}
+    {:ok, {%{}, %{}}}
   end
 
-  def subscribe(channel, socket, user_key) do
-    GenServer.call(__MODULE__, {:subscribe, channel, socket, user_key})
+  def subscribe(workspace, channel, socket, user_key) do
+    GenServer.call(__MODULE__, {:subscribe, workspace, channel, socket, user_key})
   end
 
-  def message({channel, message}) do
-    broadcast(channel, %{"text" => message, "channel" => channel, "type" => "message"}, nil)
+  def message({workspace, channel, message}) do
+    broadcast(workspace, channel, %{"text" => message, "channel" => channel, "type" => "message"}, nil)
   end
 
   def message(message) do
-    message({"console", message})
+    message({"console-workspace", "console", message})
   end
 
-  def broadcast(message, socket) when is_pid(socket) do
-    broadcast("console", message, socket)
-  end
-
-  def broadcast(channel, message, socket \\ nil) do
+  # def broadcast(channel, message, socket) when is_pid(socket) do
+  # broadcast(workspace, "console", message, socket)
+  # end
+  def broadcast(channel, message, socket) when is_pid(socket) do
     GenServer.cast(__MODULE__, {:broadcast, channel, message, socket})
   end
 
-  @impl true
-  def handle_call({:subscribe, channel, socket, user_key}, _from, channels) do
-    new_state = Map.update(channels, channel, %{socket => user_key}, fn (ch) ->
-      Map.put(ch, socket, user_key)
-    end)
-    {:reply, :ok, new_state}
+  def broadcast(workspace, channel, message, socket \\ :null_socket) do
+    GenServer.cast(__MODULE__, {:broadcast, workspace, channel, message, socket})
   end
 
   @impl true
-  @spec handle_cast({:broadcast, binary(), map(), pid()}, map()) :: {:noreply, map()}
-  def handle_cast({:broadcast, channel, unencoded_message, from_socket}, channels) do
-    uid     = channels[channel][from_socket] || "console user"
+  def handle_call({:subscribe, workspace, channel, socket, user_key}, _from, {channels, workspaces}) do
+    # TODO: raise error if changing workspaces (shouldn't happen)
+    new_workspaces = Map.put(workspaces, socket, workspace)
+    new_channels = Map.update(channels, {workspace, channel}, %{socket => user_key}, fn (ch) ->
+      Map.put(ch, socket, user_key)
+    end)
+    {:reply, :ok, {new_channels, new_workspaces}}
+  end
+
+  @impl true
+  def handle_cast({:broadcast, channel, message, from}, {_, workspaces} = state) do
+    workspace = Map.fetch!(workspaces, from)
+    handle_cast({:broadcast, workspace, channel, message, from}, state)
+  end
+
+  @impl true
+  @spec handle_cast({:broadcast, String.t, String.t, map, pid}, {map, map}) :: {:noreply, {map, map}}
+  def handle_cast({:broadcast, workspace, channel, unencoded_message, from_socket} = m, {channels, _} = state) do
+    channel_key = {workspace, channel}
+    uid     = channels[channel_key][from_socket] || "console user"
     message = unencoded_message |> Map.put("user", uid) |> Poison.encode!
     text    = unencoded_message["text"]
 
-    Slack.Console.print(channel, uid, text)
-    queues = channels |> Map.get(channel, %{})
+    Slack.Console.print(workspace, channel, uid, text)
+    queues = channels |> Map.get(channel_key, %{})
                       |> Map.keys
                       |> Enum.filter(fn
                         ^from_socket -> false
                         _ -> true
                       end)
-    Task.start(fn -> Enum.each(queues, fn q -> send(q, {:push, message}) end) end)
+
+    {:ok, _} = Task.start(fn -> Enum.each(queues, fn q -> send(q, {:push, message}) end) end)
     send_receipt(unencoded_message, from_socket)
-    {:noreply, channels}
+    {:noreply, state}
   end
 
   defp send_receipt(_msg, nil), do: nil # was not sent by a bot

@@ -5,26 +5,24 @@ defmodule Slack.Console.Socket do
   require Logger
 
   # returns a pid
+  # For these purposes, host is the workspace name (see Console.APIClient)
   def connect!(host, opts) do
     Logger.info("connect: #{[host, opts] |> inspect}")
     # path stands in for UID here
-    do_connect!(opts[:path])
+    do_connect!(host, opts[:path])
   end
 
-  defp do_connect!(unique_key) do
+  defp do_connect!(workspace, unique_key) do
     {:ok, q} = Queue.start_link
-    Slack.Console.PubSub.subscribe("console", q, unique_key)
+    Slack.Console.PubSub.subscribe(workspace, "console", q, unique_key)
     q
   end
 
   def recv(socket) do
     # ping freq is 10_000
     case Queue.pop(socket, 11_000) do
-      {:error, _} = e ->
-        Logger.error({socket, e} |> inspect)
-      val ->
-        # Logger.info("<<< #{val} #{socket |> inspect}")
-        {:ok, {:text, val}}
+      {:error, _} = e -> Logger.error({socket, e} |> inspect)
+      val -> {:ok, {:text, val}}
     end
   end
 
@@ -45,10 +43,5 @@ defmodule Slack.Console.Socket do
   # outgoing
   defp handle_payload(%{"channel" => channel, "type" => "message"} = msg, socket) do
     Slack.Console.PubSub.broadcast(channel, msg, socket)
-  end
-
-  # outgoing
-  defp handle_payload(%{"type" => "message"} = msg, socket) do
-    Slack.Console.PubSub.broadcast(msg, socket)
   end
 end

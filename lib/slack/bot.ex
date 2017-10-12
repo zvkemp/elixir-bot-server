@@ -11,12 +11,19 @@ defmodule Slack.Bot do
   import Slack, only: [default_channel: 0]
   alias Slack.Bot.{Outbox, MessageTracker}
 
+  @typedoc """
+  Tuple of {workspace, name}
+  """
+  @type bot_name :: {String.t, String.t}
+
   defmodule Config do
+    @enforce_keys [:workspace]
     defstruct [
       id: nil, # Usually set by the result of an API call
       name: nil,
       socket_client: Socket.Web,
       api_client: Slack.API,
+      workspace: nil,
       token: nil,
       ribbit_msg: nil,
       responder: nil,
@@ -28,7 +35,7 @@ defmodule Slack.Bot do
 
   alias Slack.Bot.Config
 
-  @spec start_link(atom, %Config{}) :: GenServer.on_start()
+  @spec start_link(bot_name, %Config{}) :: GenServer.on_start()
   def start_link(name, config) do
     GenServer.start_link(__MODULE__, config, name: registry_key(name, __MODULE__))
   end
@@ -38,11 +45,11 @@ defmodule Slack.Bot do
 
   ## Examples
 
-      iex> Slack.Bot.ping!("frogbot")
+      iex> Slack.Bot.ping!({"frogbot", "my-workspace"})
       :ok
 
   """
-  @spec ping!(binary) :: :ok
+  @spec ping!(bot_name) :: :ok
   def ping!(name), do: send_payload(name, %{type: "ping"})
 
   @doc """
@@ -55,7 +62,7 @@ defmodule Slack.Bot do
      Slack.Bot.say("frogbot", "Hello, world", "ABCDEF123") #=> :ok (message sent to channel given by channel id)
 
   """
-  @spec say(binary, binary | nil, binary | nil) :: :ok
+  @spec say(bot_name, binary | nil, binary | nil) :: :ok
   def say(name, text, _channel \\ nil)
 
   def say(_, nil, _), do: :ok
@@ -67,6 +74,7 @@ defmodule Slack.Bot do
   @doc """
   Attempts to look up a channel id by name, then sends the given message to it.
   """
+  # TODO: update for multi-tenancy
   def say_to_named_channel(name, text, channel_name) do
     case get_channel_id(name, channel_name) do
       :error -> :error
@@ -74,6 +82,8 @@ defmodule Slack.Bot do
     end
   end
 
+  # TODO: update for multi-tenancy
+  @spec get_channel_id(bot_name, String.t) :: String.t | :error
   defp get_channel_id(name, channel_name) do
     Agent.get(registry_key(name, :channels), fn map ->
       map
@@ -85,7 +95,7 @@ defmodule Slack.Bot do
   # ---
 
   @impl true
-  @spec init({atom, %Config{}, map()}) :: {:ok, %Config{}}
+  @spec init(%Config{}) :: {:ok, %Config{}}
   def init(%Config{} = config) do
     {:ok, config}
   end
@@ -93,7 +103,7 @@ defmodule Slack.Bot do
   @impl true
   @spec init(%{}) :: {:ok, %Config{}}
   def init(%{} = config) do
-    {:ok, Map.merge(%Config{}, config)}
+    {:ok, struct(Config, config)}
   end
 
   @spec handle_cast(:ping | {:event, map()} | {:mod_config, map()}, %Config{}) :: {:noreply, %Config{}}
@@ -115,7 +125,7 @@ defmodule Slack.Bot do
   end
 
   # append new message id to payloads with none
-  @spec send_payload(atom, map()) :: :ok
+  @spec send_payload(bot_name, map()) :: :ok
   defp send_payload(name, payload) do
     {:ok, id} = GenServer.call(registry_key(name, MessageTracker), {:push, payload})
     GenServer.cast(registry_key(name, Outbox), {:push, Map.put(payload, :id, id)})
@@ -123,8 +133,8 @@ defmodule Slack.Bot do
 
   # NOTE: removed the "ok" => true matcher (not included in pongs).
   # May want to re-add it at some point.
+  @spec process_receipt(bot_name, map, %Config{}) :: any()
   defp process_receipt(name, %{"reply_to" => id} = msg, _config) do
-    # IO.inspect({:receipt, msg})
     GenServer.call(registry_key(name, MessageTracker), {:reply, id, msg})
   end
 
@@ -132,11 +142,11 @@ defmodule Slack.Bot do
     apply(config.responder, :respond, [name, msg, config])
   end
 
-  defp process_receipt(name, %{"type" => "hello"}, _config) do
-    Logger.info("[bot:#{name}] Received \"hello\".")
+  defp process_receipt({ws, name}, %{"type" => "hello"}, _config) do
+    Logger.info("[bot:#{ws}:#{name}] Received \"hello\".")
   end
 
-  defp process_receipt(name, msg, _config) do
-    Logger.debug(fn -> "[bot:#{name}] Received unhandled: #{inspect(msg)}" end)
+  defp process_receipt({ws, name}, msg, _config) do
+    Logger.debug(fn -> "[bot:#{ws}:#{name}] Received unhandled: #{inspect(msg)}" end)
   end
 end

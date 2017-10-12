@@ -4,7 +4,12 @@ defmodule Slack.Bot.Receiver do
   Continually listens for incoming messages on the websocket.
   """
 
-  # Recursively streams packets from the websocket to the Bot controller
+  require Logger
+
+  @doc """
+  Recursively streams packets from the websocket to the Bot controller
+  """
+  @spec start_link(Slack.Bot.bot_name, pid, module) :: {:ok, pid}
   def start_link(bot, sock, client) do
     Task.start_link(recv_task(bot, sock, client))
   end
@@ -13,6 +18,7 @@ defmodule Slack.Bot.Receiver do
     fn -> recv(bot_server, socket, client_module) end
   end
 
+  @spec recv(Slack.Bot.bot_name, pid, module) :: any
   defp recv(bot_server, socket, client_module) do
     event = case client_module.recv(socket) do
       {:ok, {:text, body}} -> Poison.decode!(body)
@@ -21,7 +27,7 @@ defmodule Slack.Bot.Receiver do
       e -> raise "Something went wrong: #{inspect e}"
     end
 
-    Slack.Bot.EventHandler.handle(event, bot_server)
+    _ = Slack.Bot.EventHandler.handle(event, bot_server)
     recv(bot_server, socket, client_module)
   end
 end

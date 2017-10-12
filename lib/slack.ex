@@ -19,8 +19,8 @@ defmodule Slack.Supervisor do
 
   def init(_arg) do
     registry_spec = supervisor(Registry, [[keys: :unique, name: Slack.BotRegistry]])
-    bot_specs     = bot_configs() |> Enum.map(fn (%{name: name} = config) ->
-      supervisor(Slack.Bot.Supervisor, [config], id: {name, __MODULE__})
+    bot_specs     = bot_configs() |> Enum.map(fn (%{name: name, workspace: ws} = config) ->
+      supervisor(Slack.Bot.Supervisor, [config], id: {{ws, name}, Slack.Bot.Supervisor})
     end)
 
     children = [registry_spec | bot_specs]
@@ -55,6 +55,6 @@ defmodule Slack.Supervisor do
   defp bot_configs do
     :slack
     |> Application.get_env(:bots, [])
-    |> Enum.map(&Map.merge(%Slack.Bot.Config{}, &1))
+    |> Enum.map(&struct(Slack.Bot.Config, &1))
   end
 end

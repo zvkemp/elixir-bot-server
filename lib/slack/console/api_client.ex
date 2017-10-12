@@ -2,8 +2,8 @@ defmodule Slack.Console.APIClient do
   @behaviour Slack.Behaviours.API
 
   @impl true
-  def auth_request(token, internal_name) do
-    %{"self" => %{"id" => token}, "channels" => [], "url" => "user/#{internal_name}"}
+  def auth_request(token, {workspace, bot_name}) do
+    %{"self" => %{"id" => token}, "channels" => [], "url" => "ws://#{workspace}/user/#{bot_name}"}
   end
 
   @impl true

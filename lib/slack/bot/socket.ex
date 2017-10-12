@@ -34,7 +34,7 @@ defmodule Slack.Bot.Socket do
   defp connect(ws_url, client, bot_name) do
     %{host: host, path: path} = URI.parse(ws_url)
     sock = client.connect!(host, path: path, secure: true)
-    Slack.Bot.Receiver.start_link(bot_name, sock, client)
+    {:ok, _pid} = Receiver.start_link(bot_name, sock, client)
     sock
   end
 

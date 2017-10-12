@@ -24,10 +24,12 @@ defmodule Slack.Console do
     Slack.Console.PubSub.message(msg)
   end
 
-  def print(_channel, _uid, nil), do: :ok
-  def print(channel, uid, text) do
+  def print(c,u,p), do: print(nil, c, u, p)
+
+  def print(_ws, _channel, _uid, nil), do: :ok
+  def print(workspace, channel, uid, text) do
     if Application.get_env(:slack, :print_to_console), do:
-      [:red, "[#{channel}]", :yellow, "[#{uid}] ", :green, text]
+      [:yellow, "[#{workspace}|#{channel}]", :cyan, "[#{uid}] ", :green, text]
       |> IO.ANSI.format
       |> IO.chardata_to_string
       |> IO.puts

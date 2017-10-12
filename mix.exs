@@ -3,7 +3,7 @@ defmodule Slack.Mixfile do
 
   def project do
     [app: :slack,
-     version: "0.6.0",
+     version: "0.7.0",
      elixir: "~> 1.5",
      elixirc_paths: elixirc_paths(Mix.env),
      build_embedded: Mix.env == :prod,
@@ -43,7 +43,7 @@ defmodule Slack.Mixfile do
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
       {:credo, "~> 0.8", only: [:dev, :test]},
       {:ex_doc, "~> 0.16", only: :dev, runtime: false},
-      {:queue, "~> 0.1.0", github: "zvkemp/ex-queues"}
+      {:queue, "~> 0.1.0", github: "zvkemp/ex-queues"},
     ]
   end
 end
