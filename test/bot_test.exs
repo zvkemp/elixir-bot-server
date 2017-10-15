@@ -2,7 +2,7 @@ defmodule Slack.BotTest.Integration do
   use ExUnit.Case, async: true
   import Slack.BotRegistry
 
-  alias Slack.Bot.{MessageTracker}
+  alias Slack.{Bot.MessageTracker, TestHelpers}
 
   setup_all do
     [name, token] = [6, 9] |> Enum.map(&(:crypto.strong_rand_bytes(&1) |> Base.encode64))

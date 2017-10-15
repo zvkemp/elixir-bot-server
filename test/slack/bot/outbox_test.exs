@@ -1,5 +1,6 @@
 defmodule Slack.Bot.OutboxTest do
   use ExUnit.Case
+  alias Slack.{TestHelpers, TestMessageForwarder}
 
   setup do
     bot = TestHelpers.new_bot_name()

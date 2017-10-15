@@ -17,6 +17,7 @@ defmodule Slack.Bot do
   @type bot_name :: {String.t(), String.t()}
 
   defmodule Config do
+    @moduledoc false
     @enforce_keys [:workspace]
     # Usually set by the result of an API call
     # messages per second
@@ -29,13 +30,14 @@ defmodule Slack.Bot do
               ribbit_msg: nil,
               responder: nil,
               keywords: %{},
-              ping_frequency: 10000,
+              ping_frequency: 10_000,
               rate_limit: 1
+    @type t :: %Config{}
   end
 
   alias Slack.Bot.Config
 
-  @spec start_link(bot_name, %Config{}) :: GenServer.on_start()
+  @spec start_link(bot_name, Config.t) :: GenServer.on_start()
   def start_link(name, config) do
     GenServer.start_link(__MODULE__, config, name: registry_key(name, __MODULE__))
   end

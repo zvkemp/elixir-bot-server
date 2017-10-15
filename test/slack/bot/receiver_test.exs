@@ -1,6 +1,8 @@
 defmodule Slack.Bot.ReceiverTest do
   use ExUnit.Case
 
+  alias Slack.{TestHelpers, TestMessageForwarder}
+
   setup do
     bot = TestHelpers.new_bot_name
     {:ok, queue} = Queue.start_link
