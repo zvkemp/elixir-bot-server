@@ -13,14 +13,14 @@ defmodule Slack.Console.Socket do
   end
 
   defp do_connect!(workspace, unique_key) do
-    {:ok, q} = Queue.start_link
+    {:ok, q} = Queue.start_link()
     Slack.Console.PubSub.subscribe(workspace, "console", q, unique_key)
     q
   end
 
   def recv(socket) do
     # ping freq is 10_000
-    case Queue.pop(socket, 11_000) do
+    case Queue.pop(socket, 11000) do
       {:error, _} = e -> Logger.error({socket, e} |> inspect)
       val -> {:ok, {:text, val}}
     end
@@ -36,7 +36,7 @@ defmodule Slack.Console.Socket do
 
   # outgoing, but simulate pong response immediately
   defp handle_payload(%{"type" => "ping", "id" => id} = msg, socket) do
-    Queue.push(socket, %{"reply_to" => id, "type" => "pong"} |> Poison.encode!)
+    Queue.push(socket, %{"reply_to" => id, "type" => "pong"} |> Poison.encode!())
     Slack.Console.PubSub.broadcast("__pings__", msg, socket)
   end
 

@@ -11,9 +11,12 @@ defmodule Slack.Console do
   use Supervisor
 
   def init(_args) do
-    Supervisor.init([
-      {Slack.Console.PubSub, []}
-    ], strategy: :one_for_one)
+    Supervisor.init(
+      [
+        {Slack.Console.PubSub, []}
+      ],
+      strategy: :one_for_one
+    )
   end
 
   def start_link do
@@ -24,14 +27,15 @@ defmodule Slack.Console do
     Slack.Console.PubSub.message(msg)
   end
 
-  def print(c,u,p), do: print(nil, c, u, p)
+  def print(c, u, p), do: print(nil, c, u, p)
 
   def print(_ws, _channel, _uid, nil), do: :ok
+
   def print(workspace, channel, uid, text) do
-    if Application.get_env(:slack, :print_to_console), do:
-      [:yellow, "[#{workspace}|#{channel}]", :cyan, "[#{uid}] ", :green, text]
-      |> IO.ANSI.format
-      |> IO.chardata_to_string
-      |> IO.puts
+    if Application.get_env(:slack, :print_to_console),
+      do: [:yellow, "[#{workspace}|#{channel}]", :cyan, "[#{uid}] ", :green, text]
+          |> IO.ANSI.format()
+          |> IO.chardata_to_string()
+          |> IO.puts()
   end
 end

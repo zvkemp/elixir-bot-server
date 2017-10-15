@@ -2,12 +2,14 @@ defmodule Slack.API do
   @behaviour Slack.Behaviours.API
 
   @api_root "https://slack.com/api"
-  @methods %{auth:         "rtm.start",
-             channels:     "channels.list",
-             groups:       "groups.list",
-             join_channel: "channels.join",
-             leave_channel: "channels.leave"}
-  @json_headers ["Content-Type": "application/json", "Accepts": "application/json"]
+  @methods %{
+    auth: "rtm.start",
+    channels: "channels.list",
+    groups: "groups.list",
+    join_channel: "channels.join",
+    leave_channel: "channels.leave"
+  }
+  @json_headers ["Content-Type": "application/json", Accepts: "application/json"]
 
   def auth_request(token, _internal_name \\ nil) do
     post_method(:auth, %{token: token})
@@ -40,9 +42,9 @@ defmodule Slack.API do
   end
 
   defp post(path) do
-    case HTTPotion.post("#{@api_root}/#{path}", [headers: @json_headers]) do
+    case HTTPotion.post("#{@api_root}/#{path}", headers: @json_headers) do
       %{status_code: 200, body: body} -> {:ok, Poison.decode!(body)}
-      %{status_code: s}               -> {:error, s}
+      %{status_code: s} -> {:error, s}
     end
   end
 end

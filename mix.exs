@@ -3,11 +3,13 @@ defmodule Slack.Mixfile do
 
   def project do
     [app: :slack,
-     version: "0.7.1",
+     version: "0.7.2",
      elixir: "~> 1.5",
      elixirc_paths: elixirc_paths(Mix.env),
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
+     test_coverage: [tool: ExCoveralls],
+     preferred_cli_env: ["coveralls": :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test],
      dialyzer: [plt_add_apps: [:poison], flags: [:unmatched_returns, :error_handling, :race_conditions, :underspecs]],
      deps: deps()]
   end
@@ -44,6 +46,7 @@ defmodule Slack.Mixfile do
       {:credo, "~> 0.8", only: [:dev, :test]},
       {:ex_doc, "~> 0.16", only: :dev, runtime: false},
       {:queue, "~> 0.1.0", github: "zvkemp/ex-queues"},
+      {:excoveralls, "~> 0.7", only: :test}
     ]
   end
 end

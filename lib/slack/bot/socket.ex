@@ -10,7 +10,11 @@ defmodule Slack.Bot.Socket do
   use GenServer
 
   def start_link(name, ws_url, client) do
-    GenServer.start_link(__MODULE__, {:ok, ws_url, client, name}, name: registry_key(name, __MODULE__))
+    GenServer.start_link(
+      __MODULE__,
+      {:ok, ws_url, client, name},
+      name: registry_key(name, __MODULE__)
+    )
   end
 
   # CALLBACKS
@@ -25,6 +29,7 @@ defmodule Slack.Bot.Socket do
     {:reply, outcome, {socket, client}}
   end
 
+  @impl true
   def handle_call(:socket_pid, _from, {socket, _} = s) do
     {:reply, socket, s}
   end

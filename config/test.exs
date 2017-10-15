@@ -2,6 +2,7 @@ use Mix.Config
 
 config :slack,
   use_console: true,
+  print_to_console: true,
   default_channel: "console",
   bots: (
     for {name, msg} <- [{"frogbot", "ribbit"}, {"toadbot", "croak"}, {"owlbot", "hoot"}],

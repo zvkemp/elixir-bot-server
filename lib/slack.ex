@@ -2,7 +2,7 @@ defmodule Slack do
   use Application
 
   def start(_type, _args) do
-    Slack.Supervisor.start_link
+    Slack.Supervisor.start_link()
   end
 
   def default_channel do
@@ -20,19 +20,21 @@ defmodule Slack.Supervisor do
   def init(_arg) do
     registry_spec = supervisor(Registry, [[keys: :unique, name: Slack.BotRegistry]])
 
-    bot_specs = bot_configs()
-    |> Task.async_stream(&bot_config_to_spec/1)
-    |> Enum.map(fn ({:ok, {%{name: bot} = config, data}}) ->
-      supervisor(Slack.Bot.Supervisor, [config, data], id: {bot, Slack.Bot.Supervisor})
-    end)
+    bot_specs =
+      bot_configs()
+      |> Task.async_stream(&bot_config_to_spec/1)
+      |> Enum.map(fn {:ok, {%{name: bot} = config, data}} ->
+           supervisor(Slack.Bot.Supervisor, [config, data], id: {bot, Slack.Bot.Supervisor})
+         end)
 
     children = [registry_spec | bot_specs]
 
-    children = if use_console?() do
-      [supervisor(Slack.Console, [])|children]
-    else
-      children
-    end
+    children =
+      if use_console?() do
+        [supervisor(Slack.Console, []) | children]
+      else
+        children
+      end
 
     supervise(children, strategy: :one_for_one)
   end
@@ -51,9 +53,16 @@ defmodule Slack.Supervisor do
   end
 
   defp bot_configs do
+    defaults = forced_bot_config_values()
     :slack
     |> Application.get_env(:bots, [])
-    |> Enum.map(&struct(Slack.Bot.Config, &1))
+    |> Enum.map(&struct(Slack.Bot.Config, &1 |> Map.merge(defaults)))
+  end
+
+  defp forced_bot_config_values do
+    if Application.get_env(:slack, :all_bots_use_console),
+    do: %{socket_client: Slack.Console.Socket, api_client: Slack.Console.APIClient},
+    else: %{}
   end
 
   defp bot_config_to_spec(conf) do
