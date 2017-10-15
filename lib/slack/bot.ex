@@ -14,28 +14,30 @@ defmodule Slack.Bot do
   @typedoc """
   Tuple of {workspace, name}
   """
-  @type bot_name :: {String.t, String.t}
+  @type bot_name :: {String.t(), String.t()}
 
   defmodule Config do
+    @moduledoc false
     @enforce_keys [:workspace]
-    defstruct [
-      id: nil, # Usually set by the result of an API call
-      name: nil,
-      socket_client: Socket.Web,
-      api_client: Slack.API,
-      workspace: nil,
-      token: nil,
-      ribbit_msg: nil,
-      responder: nil,
-      keywords: %{},
-      ping_frequency: 10_000,
-      rate_limit: 1 # messages per second
-    ]
+    # Usually set by the result of an API call
+    # messages per second
+    defstruct id: nil,
+              name: nil,
+              socket_client: Socket.Web,
+              api_client: Slack.API,
+              workspace: nil,
+              token: nil,
+              ribbit_msg: nil,
+              responder: nil,
+              keywords: %{},
+              ping_frequency: 10_000,
+              rate_limit: 1
+    @type t :: %Config{}
   end
 
   alias Slack.Bot.Config
 
-  @spec start_link(bot_name, %Config{}) :: GenServer.on_start()
+  @spec start_link(bot_name, Config.t) :: GenServer.on_start()
   def start_link(name, config) do
     GenServer.start_link(__MODULE__, config, name: registry_key(name, __MODULE__))
   end
@@ -62,7 +64,7 @@ defmodule Slack.Bot do
      Slack.Bot.say("frogbot", "Hello, world", "ABCDEF123") #=> :ok (message sent to channel given by channel id)
 
   """
-  @spec say(bot_name, binary | nil, binary | nil) :: :ok
+  @spec say(bot_name, String.t | nil, String.t | nil) :: :ok
   def say(name, text, _channel \\ nil)
 
   def say(_, nil, _), do: :ok
@@ -83,7 +85,7 @@ defmodule Slack.Bot do
   end
 
   # TODO: update for multi-tenancy
-  @spec get_channel_id(bot_name, String.t) :: String.t | :error
+  @spec get_channel_id(bot_name, String.t()) :: String.t() | :error
   defp get_channel_id(name, channel_name) do
     Agent.get(registry_key(name, :channels), fn map ->
       map
@@ -106,7 +108,10 @@ defmodule Slack.Bot do
     {:ok, struct(Config, config)}
   end
 
-  @spec handle_cast(:ping | {:event, map()} | {:mod_config, map()}, %Config{}) :: {:noreply, %Config{}}
+  @spec handle_cast(:ping | {:event, map()} | {:mod_config, map()}, %Config{}) :: {
+          :noreply,
+          %Config{}
+        }
   @impl true
   def handle_cast(:ping, config) do
     ping!(config.name)

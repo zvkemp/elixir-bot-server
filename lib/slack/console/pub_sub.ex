@@ -6,7 +6,13 @@ defmodule Slack.Console.PubSub do
   require Logger
 
   def child_spec(_args) do
-    %{id: __MODULE__, start: {__MODULE__, :start_link, []}, restart: :permanent, shutdown: 5000, type: :worker}
+    %{
+      id: __MODULE__,
+      start: {__MODULE__, :start_link, []},
+      restart: :permanent,
+      shutdown: 5000,
+      type: :worker
+    }
   end
 
   def start_link do
@@ -23,7 +29,12 @@ defmodule Slack.Console.PubSub do
   end
 
   def message({workspace, channel, message}) do
-    broadcast(workspace, channel, %{"text" => message, "channel" => channel, "type" => "message"}, nil)
+    broadcast(
+      workspace,
+      channel,
+      %{"text" => message, "channel" => channel, "type" => "message"},
+      nil
+    )
   end
 
   def message(message) do
@@ -42,12 +53,18 @@ defmodule Slack.Console.PubSub do
   end
 
   @impl true
-  def handle_call({:subscribe, workspace, channel, socket, user_key}, _from, {channels, workspaces}) do
+  def handle_call({:subscribe, workspace, channel, socket, user_key}, _from, {
+        channels,
+        workspaces
+      }) do
     # TODO: raise error if changing workspaces (shouldn't happen)
     new_workspaces = Map.put(workspaces, socket, workspace)
-    new_channels = Map.update(channels, {workspace, channel}, %{socket => user_key}, fn (ch) ->
-      Map.put(ch, socket, user_key)
-    end)
+
+    new_channels =
+      Map.update(channels, {workspace, channel}, %{socket => user_key}, fn ch ->
+        Map.put(ch, socket, user_key)
+      end)
+
     {:reply, :ok, {new_channels, new_workspaces}}
   end
 
@@ -58,35 +75,49 @@ defmodule Slack.Console.PubSub do
   end
 
   @impl true
-  @spec handle_cast({:broadcast, String.t, String.t, map, pid}, {map, map}) :: {:noreply, {map, map}}
-  def handle_cast({:broadcast, workspace, channel, unencoded_message, from_socket} = m, {channels, _} = state) do
-    ts = System.os_time(:microseconds) / 10_000_00
+  @spec handle_cast({:broadcast, String.t(), String.t(), map, pid}, {map, map}) :: {
+          :noreply,
+          {map, map}
+        }
+  def handle_cast(
+        {:broadcast, workspace, channel, unencoded_message, from_socket},
+        {channels, _} = state
+      ) do
+    ts = System.os_time(:microseconds) / 1_000_000
     channel_key = {workspace, channel}
-    uid     = channels[channel_key][from_socket] || "console user"
-    message = unencoded_message |> Map.merge(%{"user" => uid, "ts" => "#{ts}"}) |> Poison.encode!
-    text    = unencoded_message["text"]
+    uid = channels[channel_key][from_socket] || "console user"
+
+    message =
+      unencoded_message |> Map.merge(%{"user" => uid, "ts" => "#{ts}"}) |> Poison.encode!()
+
+    text = unencoded_message["text"]
 
     Slack.Console.print(workspace, channel, uid, text)
-    queues = channels |> Map.get(channel_key, %{})
-                      |> Map.keys
-                      |> Enum.filter(fn
-                        ^from_socket -> false
-                        _ -> true
-                      end)
+
+    queues =
+      channels
+      |> Map.get(channel_key, %{})
+      |> Map.keys()
+      |> Enum.filter(fn
+           ^from_socket -> false
+           _ -> true
+         end)
 
     {:ok, _} = Task.start(fn -> Enum.each(queues, fn q -> send(q, {:push, message}) end) end)
     send_receipt(unencoded_message, from_socket)
     {:noreply, state}
   end
 
-  defp send_receipt(_msg, nil), do: nil # was not sent by a bot
+  # was not sent by a bot
+  defp send_receipt(_msg, nil), do: nil
 
   defp send_receipt(msg, from_socket) do
-    receipt = Map.merge(msg, %{
-      "ts" => :os.system_time / 1_000_000_000,
-      "ok" => true,
-      "reply_to" => msg["id"]
-    })
+    receipt =
+      Map.merge(msg, %{
+        "ts" => :os.system_time() / 1_000_000_000,
+        "ok" => true,
+        "reply_to" => msg["id"]
+      })
 
     Queue.push(from_socket, Poison.encode!(receipt))
   end

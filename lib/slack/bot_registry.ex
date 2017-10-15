@@ -7,6 +7,8 @@ defmodule Slack.BotRegistry do
   end
 
   def lookup(key) do
-    Registry.lookup(__MODULE__, key) |> List.first
+    __MODULE__
+    |> Registry.lookup(key)
+    |> List.first()
   end
 end

@@ -3,7 +3,11 @@ defmodule Slack.Bot.Outbox do
   import Slack.BotRegistry
 
   def start_link(name, rate_limit \\ 1000) do
-    GenServer.start_link(__MODULE__, {:ok, name, rate_limit}, name: registry_key(name, __MODULE__))
+    GenServer.start_link(
+      __MODULE__,
+      {:ok, name, rate_limit},
+      name: registry_key(name, __MODULE__)
+    )
   end
 
   @impl true
