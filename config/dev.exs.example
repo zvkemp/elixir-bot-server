@@ -5,14 +5,12 @@ config :slack,
   print_to_console: true, # print console messages to the local tty (disabled in test)
   default_channel: "CHANNELID",
   bots: [
-    %{ name:    "bot_a",
-       token:   "BOT_ACCESS_TOKEN (starting with xoxb-)", 
-       ribbit_msg: "ribbit", # used in default responder
-       responder: Slack.Responders.Default
-     },
-    %{ name:    "bot_b",
-       token:   "BOT_ACCESS_TOKEN (starting with xoxb-)", 
-       ribbit_msg: "ribbit", # used in default responder
-       responder: Slack.Responders.Default
-     }
+    %{name: "frogbot",
+      workspace: "frog-and-toad",
+      socket_client: Slack.Console.Socket, # Remove this line to test with a real Slack channel
+      api_client: Slack.Console.APIClient, # Remove this line to test with a real Slack channel
+      token: "frogbot-local-token", # Replace with real API token
+      ribbit_msg: "ribbit",
+      responder: Slack.Responders.Default
+    }
   ]
