@@ -47,7 +47,7 @@ defmodule Slack.Bot do
 
   ## Examples
 
-      iex> Slack.Bot.ping!({"frogbot", "my-workspace"})
+      iex> Slack.Bot.ping!({"my-workspace", "frogbot"})
       :ok
 
   """
