@@ -16,7 +16,7 @@ defmodule Slack.Bot.Supervisor do
     children = [
       worker(Bot, [name, Map.merge(c, %{id: uid, name: name})]),
       worker(Bot.Socket, [name, ws_url, c.socket_client]),
-      worker(Bot.MessageTracker, [name, c.ping_frequency || 10000]),
+      worker(Bot.MessageTracker, [name, c.ping_frequency || 10_000]),
       worker(Bot.Outbox, [name, c.rate_limit])
     ]
 
