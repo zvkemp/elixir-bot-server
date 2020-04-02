@@ -4,8 +4,8 @@ defmodule Slack.Bot.ReceiverTest do
   alias Slack.{TestHelpers, TestMessageForwarder}
 
   setup do
-    bot = TestHelpers.new_bot_name
-    {:ok, queue} = Queue.start_link
+    bot = TestHelpers.new_bot_name()
+    {:ok, queue} = Queue.start_link()
     {:ok, server} = Slack.Bot.Receiver.start_link(bot, queue, Slack.Console.Socket)
     TestMessageForwarder.start_as(bot, Slack.Bot)
     {:ok, %{queue: queue, server: server, bot: bot}}

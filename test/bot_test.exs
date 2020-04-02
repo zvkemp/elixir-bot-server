@@ -5,7 +5,7 @@ defmodule Slack.BotTest.Integration do
   alias Slack.{Bot.MessageTracker, TestHelpers}
 
   setup_all do
-    [name, token] = [6, 9] |> Enum.map(&(:crypto.strong_rand_bytes(&1) |> Base.encode64))
+    [name, token] = [6, 9] |> Enum.map(&(:crypto.strong_rand_bytes(&1) |> Base.encode64()))
 
     # NOTE: There are also 6 bots on two workspaces configured by default; see config/test.exs
     config = %Slack.Bot.Config{
@@ -34,8 +34,10 @@ defmodule Slack.BotTest.Integration do
 
   test "manual pings", %{config: %{name: name}} do
     Slack.Bot.ping!(name)
-    assert_receive({:json, %{"type" => "ping"}}, 25) # first automatic ping would not have been received yet
-    assert_receive({:json, %{"type" => "ping"}}, 120) # automatic ping
+    # first automatic ping would not have been received yet
+    assert_receive({:json, %{"type" => "ping"}}, 25)
+    # automatic ping
+    assert_receive({:json, %{"type" => "ping"}}, 120)
   end
 
   test "say with default channel", %{config: %{name: name, token: _token}} do
@@ -47,16 +49,20 @@ defmodule Slack.BotTest.Integration do
     state = GenServer.call(registry_key(name, MessageTracker), :current)
 
     # pubsub broadcasts to subscribers
-    assert_receive({:json, %{
-      "type"    => "message",
-      "text"    => ^message,
-      "channel" => ^channel,
-      "id"      => msg_id
-    }})
+    assert_receive(
+      {:json,
+       %{
+         "type" => "message",
+         "text" => ^message,
+         "channel" => ^channel,
+         "id" => msg_id
+       }}
+    )
 
     assert ^message = state.messages[msg_id][:text]
 
-    :timer.sleep(15) # TODO: replace this wait with something more deterministic
+    # TODO: replace this wait with something more deterministic
+    :timer.sleep(15)
     # cleans up the message upon server receipt
     assert %{messages: %{}} = GenServer.call(registry_key(name, MessageTracker), :current)
   end

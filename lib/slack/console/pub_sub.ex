@@ -87,8 +87,7 @@ defmodule Slack.Console.PubSub do
     channel_key = {workspace, channel}
     uid = channels[channel_key][from_socket] || "console user"
 
-    message =
-      unencoded_message |> Map.merge(%{"user" => uid, "ts" => "#{ts}"}) |> Jason.encode!()
+    message = unencoded_message |> Map.merge(%{"user" => uid, "ts" => "#{ts}"}) |> Jason.encode!()
 
     text = unencoded_message["text"]
 
@@ -99,9 +98,9 @@ defmodule Slack.Console.PubSub do
       |> Map.get(channel_key, %{})
       |> Map.keys()
       |> Enum.filter(fn
-           ^from_socket -> false
-           _ -> true
-         end)
+        ^from_socket -> false
+        _ -> true
+      end)
 
     {:ok, _} = Task.start(fn -> Enum.each(queues, fn q -> send(q, {:push, message}) end) end)
     send_receipt(unencoded_message, from_socket)

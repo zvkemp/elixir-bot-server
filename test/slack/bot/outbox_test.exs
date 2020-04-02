@@ -11,7 +11,11 @@ defmodule Slack.Bot.OutboxTest do
     {:ok, %{server: server, bot: bot, rate_limit: rate_limit, role: role}}
   end
 
-  test "limits outgoing messages to one per {rate limit}", %{role: role, server: server, rate_limit: rate_limit} do
+  test "limits outgoing messages to one per {rate limit}", %{
+    role: role,
+    server: server,
+    rate_limit: rate_limit
+  } do
     GenServer.cast(server, {:push, "foo"})
     GenServer.cast(server, {:push, "bar"})
 
