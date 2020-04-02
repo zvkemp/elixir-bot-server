@@ -16,7 +16,7 @@ defmodule Slack.TestHelpers do
     {:ok, pid} = Slack.TestMessageForwarder.start_as(
       {workspace, user_key},
       :json,
-      fn {:push, json} -> Poison.decode!(json) end
+      fn {:push, json} -> Jason.decode!(json) end
     )
     Slack.Console.PubSub.subscribe(workspace, channel, pid, user_key)
   end

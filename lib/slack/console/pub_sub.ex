@@ -83,12 +83,11 @@ defmodule Slack.Console.PubSub do
         {:broadcast, workspace, channel, unencoded_message, from_socket},
         {channels, _} = state
       ) do
-    ts = System.os_time(:microseconds) / 1_000_000
+    ts = System.os_time(:microsecond) / 1_000_000
     channel_key = {workspace, channel}
     uid = channels[channel_key][from_socket] || "console user"
 
-    message =
-      unencoded_message |> Map.merge(%{"user" => uid, "ts" => "#{ts}"}) |> Poison.encode!()
+    message = unencoded_message |> Map.merge(%{"user" => uid, "ts" => "#{ts}"}) |> Jason.encode!()
 
     text = unencoded_message["text"]
 
@@ -99,9 +98,9 @@ defmodule Slack.Console.PubSub do
       |> Map.get(channel_key, %{})
       |> Map.keys()
       |> Enum.filter(fn
-           ^from_socket -> false
-           _ -> true
-         end)
+        ^from_socket -> false
+        _ -> true
+      end)
 
     {:ok, _} = Task.start(fn -> Enum.each(queues, fn q -> send(q, {:push, message}) end) end)
     send_receipt(unencoded_message, from_socket)
@@ -119,6 +118,6 @@ defmodule Slack.Console.PubSub do
         "reply_to" => msg["id"]
       })
 
-    Queue.push(from_socket, Poison.encode!(receipt))
+    Queue.push(from_socket, Jason.encode!(receipt))
   end
 end

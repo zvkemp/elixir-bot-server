@@ -33,9 +33,10 @@ defmodule Slack.Console do
 
   def print(workspace, channel, uid, text) do
     if Application.get_env(:slack, :print_to_console),
-      do: [:yellow, "[#{workspace}|#{channel}]", :cyan, "[#{uid}] ", :green, text]
-          |> IO.ANSI.format()
-          |> IO.chardata_to_string()
-          |> IO.puts()
+      do:
+        [:yellow, "[#{workspace}|#{channel}]", :cyan, "[#{uid}] ", :green, text]
+        |> IO.ANSI.format()
+        |> IO.chardata_to_string()
+        |> IO.puts()
   end
 end

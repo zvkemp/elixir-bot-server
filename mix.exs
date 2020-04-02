@@ -9,7 +9,7 @@ defmodule Slack.Mixfile do
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      test_coverage: [tool: ExCoveralls],
-     preferred_cli_env: ["coveralls": :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test],
+     preferred_cli_env: [coveralls: :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test],
      dialyzer: [plt_add_apps: [:poison], flags: [:unmatched_returns, :error_handling, :race_conditions, :underspecs]],
      deps: deps()]
   end
@@ -38,15 +38,14 @@ defmodule Slack.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:httpotion, "~> 3.0.0"},
+      {:httpotion, "~> 3.1.3"},
       {:socket, "~> 0.3.12"},
-      {:poison, "~> 2.0"},
-      {:mix_test_watch, "~> 0.2", only: :dev},
-      {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
-      {:credo, "~> 0.8", only: [:dev, :test]},
-      {:ex_doc, "~> 0.16", only: :dev, runtime: false},
+      {:jason, "~> 1.2"},
+      {:mix_test_watch, "~> 1.0", only: :dev},
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:credo, "~> 1.3", only: [:dev, :test]},
+      {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:queue, "~> 0.1.0", github: "zvkemp/ex-queues"},
-      {:excoveralls, "~> 0.7", only: :test}
     ]
   end
 end

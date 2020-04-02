@@ -3,7 +3,7 @@ defmodule QueueTest do
   doctest Queue
 
   test "basic sync usage" do
-    {:ok, q} = Queue.start_link
+    {:ok, q} = Queue.start_link()
 
     Queue.push(q, 1)
     Queue.push(q, 2)
@@ -16,23 +16,23 @@ defmodule QueueTest do
   end
 
   test "with infinite pop timeout" do
-    {:ok, q} = Queue.start_link
+    {:ok, q} = Queue.start_link()
 
-    spawn fn ->
+    spawn(fn ->
       Process.sleep(200)
       Queue.push(q, :foo)
-    end
+    end)
 
     assert Queue.pop(q) == :foo
   end
 
   test "messages are preserved on pop timeout" do
-    {:ok, q} = Queue.start_link
+    {:ok, q} = Queue.start_link()
 
-    spawn fn ->
+    spawn(fn ->
       Process.sleep(300)
       Queue.push(q, :foo)
-    end
+    end)
 
     assert Queue.pop(q, 50) == {:error, :timeout}
     assert Queue.pop(q, 50) == {:error, :timeout}

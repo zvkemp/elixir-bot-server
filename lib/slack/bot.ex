@@ -32,12 +32,13 @@ defmodule Slack.Bot do
               keywords: %{},
               ping_frequency: 10_000,
               rate_limit: 1
+
     @type t :: %Config{}
   end
 
   alias Slack.Bot.Config
 
-  @spec start_link(bot_name, Config.t) :: GenServer.on_start()
+  @spec start_link(bot_name, Config.t()) :: GenServer.on_start()
   def start_link(name, config) do
     GenServer.start_link(__MODULE__, config, name: registry_key(name, __MODULE__))
   end
@@ -64,7 +65,7 @@ defmodule Slack.Bot do
      Slack.Bot.say("frogbot", "Hello, world", "ABCDEF123") #=> :ok (message sent to channel given by channel id)
 
   """
-  @spec say(bot_name, String.t | nil, String.t | nil) :: :ok
+  @spec say(bot_name, String.t() | nil, String.t() | nil) :: :ok
   def say(name, text, _channel \\ nil)
 
   def say(_, nil, _), do: :ok

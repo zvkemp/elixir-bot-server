@@ -24,8 +24,8 @@ defmodule Slack.Supervisor do
       bot_configs()
       |> Task.async_stream(&bot_config_to_spec/1)
       |> Enum.map(fn {:ok, {%{name: bot} = config, data}} ->
-           supervisor(Slack.Bot.Supervisor, [config, data], id: {bot, Slack.Bot.Supervisor})
-         end)
+        supervisor(Slack.Bot.Supervisor, [config, data], id: {bot, Slack.Bot.Supervisor})
+      end)
 
     children = [registry_spec | bot_specs]
 
@@ -54,6 +54,7 @@ defmodule Slack.Supervisor do
 
   defp bot_configs do
     defaults = forced_bot_config_values()
+
     :slack
     |> Application.get_env(:bots, [])
     |> Enum.map(&struct(Slack.Bot.Config, &1 |> Map.merge(defaults)))
@@ -61,8 +62,8 @@ defmodule Slack.Supervisor do
 
   defp forced_bot_config_values do
     if Application.get_env(:slack, :all_bots_use_console),
-    do: %{socket_client: Slack.Console.Socket, api_client: Slack.Console.APIClient},
-    else: %{}
+      do: %{socket_client: Slack.Console.Socket, api_client: Slack.Console.APIClient},
+      else: %{}
   end
 
   defp bot_config_to_spec(conf) do

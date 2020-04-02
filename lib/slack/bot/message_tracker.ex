@@ -12,10 +12,10 @@ defmodule Slack.Bot.MessageTracker do
   import Slack.BotRegistry
 
   defmodule State do
-    defstruct messages: %{}, counter: 1, ping_ref: nil, name: nil, ping_freq: 10000
+    defstruct messages: %{}, counter: 1, ping_ref: nil, name: nil, ping_freq: 10_000
   end
 
-  @ping_ms 10000
+  @ping_ms 10_000
 
   @spec start_link(Slack.Bot.bot_name(), integer) :: GenServer.on_start()
   def start_link(name, ping_freq \\ @ping_ms) do
