@@ -22,7 +22,7 @@ defmodule Slack.Bot.Receiver do
   defp recv(bot_server, socket, client_module) do
     event =
       case client_module.recv(socket) do
-        {:ok, {:text, body}} -> Poison.decode!(body)
+        {:ok, {:text, body}} -> Jason.decode!(body)
         {:ok, {:ping, _}} -> {:ping}
         :ok -> nil
         e -> raise "Something went wrong: #{inspect(e)}"

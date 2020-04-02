@@ -1,6 +1,5 @@
 defmodule Slack.Bot.MessageTrackerTest do
   use ExUnit.Case
-  import Slack.BotRegistry
   alias Slack.{TestHelpers, TestMessageForwarder, Bot}
 
   setup do

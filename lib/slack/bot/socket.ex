@@ -44,6 +44,6 @@ defmodule Slack.Bot.Socket do
   end
 
   defp send_payload(socket, payload, client) do
-    socket |> client.send!({:text, Poison.encode!(payload)})
+    socket |> client.send!({:text, Jason.encode!(payload)})
   end
 end

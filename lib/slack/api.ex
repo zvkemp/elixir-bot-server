@@ -43,7 +43,7 @@ defmodule Slack.API do
 
   defp post(path) do
     case HTTPotion.post("#{@api_root}/#{path}", headers: @json_headers) do
-      %{status_code: 200, body: body} -> {:ok, Poison.decode!(body)}
+      %{status_code: 200, body: body} -> {:ok, Jason.decode!(body)}
       %{status_code: s} -> {:error, s}
     end
   end

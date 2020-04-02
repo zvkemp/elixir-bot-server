@@ -31,12 +31,12 @@ defmodule Slack.Console.Socket do
   end
 
   defp handle_payload({:text, payload}, socket) do
-    handle_payload(Poison.decode!(payload), socket)
+    handle_payload(Jason.decode!(payload), socket)
   end
 
   # outgoing, but simulate pong response immediately
   defp handle_payload(%{"type" => "ping", "id" => id} = msg, socket) do
-    Queue.push(socket, %{"reply_to" => id, "type" => "pong"} |> Poison.encode!())
+    Queue.push(socket, %{"reply_to" => id, "type" => "pong"} |> Jason.encode!())
     Slack.Console.PubSub.broadcast("__pings__", msg, socket)
   end
 

@@ -15,8 +15,8 @@ defmodule Slack.Bot.OutboxTest do
     GenServer.cast(server, {:push, "foo"})
     GenServer.cast(server, {:push, "bar"})
 
-    assert_receive({role, {:push, "foo"}})
+    assert_receive({^role, {:push, "foo"}})
     refute_receive({_, {:push, "bar"}}, rate_limit)
-    assert_receive({role, {:push, "bar"}}, rate_limit * 2)
+    assert_receive({^role, {:push, "bar"}}, rate_limit * 2)
   end
 end

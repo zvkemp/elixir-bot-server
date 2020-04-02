@@ -13,8 +13,8 @@ defmodule Slack.Bot.ReceiverTest do
 
   test "received messages are decoded and forwarded to the bot as an event", %{
     queue: queue,
-    server: server,
-    bot: bot
+    server: _server,
+    bot: _bot
   } do
     Queue.push(queue, "{\"hello\": \"world\"}")
     assert_receive({Slack.Bot, {:event, %{"hello" => "world"}}})

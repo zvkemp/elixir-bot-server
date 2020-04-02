@@ -20,6 +20,7 @@ defmodule Slack.Bot.Supervisor do
       worker(Bot.Outbox, [name, c.rate_limit])
     ]
 
+    # FIXME: update to new child specs
     supervise(children, strategy: :rest_for_one)
   end
 
